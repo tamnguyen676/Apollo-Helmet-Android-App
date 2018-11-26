@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_navigation"
+        android:icon="@drawable/ic_navigation_black_24dp"
+        android:title="Navigation"/>
+
+    <item
+        android:id="@+id/navigation_contacts"
+        android:icon="@drawable/ic_group_black_24dp"
+        android:title="Emergency Contacts"/>
+
+    <item
+        android:id="@+id/navigation_helmet"
+        android:icon="@drawable/ic_helmet"
+        android:title="Helmet"/>
+</menu>

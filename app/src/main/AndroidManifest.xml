@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.apollo.apollo">
+
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.SEND_SMS"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    
+    <application
+        android:allowBackup="true"
+        android:hardwareAccelerated="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"
+        tools:ignore="GoogleAppIndexingWarning">
+
+        <activity
+            android:name=".SplashActivity"
+            android:theme="@style/SplashTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".MainActivity"
+            android:theme="@style/AppTheme">
+        </activity>
+
+        <activity android:name=".ListContactActivity"
+                  android:label="@string/dataList_title"/>
+
+        <activity android:name=".EditDataActivity"
+                  android:label="@string/editData_title"/>
+
+        <meta-data android:name="com.here.android.maps.appid" android:value="WRtx0M8EE0EZLhWDz8lz"/>
+        <meta-data android:name="com.here.android.maps.apptoken" android:value="0NMTdlM5PbWW6B2uvvl_qw"/>
+        <meta-data
+            android:name="com.here.android.maps.license.key"
+            android:value="BlEL+hQpRkQnxcI8aoYHxuiEEnLeKY/MUmnHzVGe2OXOak5Q53pMxzdmFLjQu8/q6r9/BAGXkLysk3C/Nk/hJmaG4Bxbpv9+dssn4pRR1ghKcTIcBtqcPMkzCDFS1q3rcnkc2cqPjpabr47wQdw1RPndqvkmu8GUpBCAL+MpuacXaBXa/Z3Frf9o91iDdUK+5DQsTg6HwzJZQ5mviQnhiycHvh7KsOjRidyNct65VCfH4xNukLBuAVjofvrapUgkcovOpg6hPzz2WxL7C5CQUmP5lwPGk0NwEgRIENjTNWJ9LHS/y/1zRM3EGsjYkYpICcXTnWln9hioWLSIP5Kofl4xi8AG5ybMz6SY3EgAbM7YkSSZTfaP++PxIfQBq0rSdeQfS/6Hl5xPji2wMZz6driPRuTpSZWXkPz1KGwmNU8saM+YLr6KLbhOG4C9dIWFkMZlDlnGPFLVz2vFJ5xRIOi9X5zXEuZ0kuO9/peRCPtMkvITpd6kJhSHSZNp2HcPz2mEG5LpQrcUZfRyAsQWHUklDuh2PDM8Mzmku3pyH4gIFmzWF5rcoFdUZwXfJskByxBCTQtjQnvRLIcdBdlKy5O4XCEhivBX7ifrINctomqp1cx9rR/N5dmruyd5lb/wIIFmifH/wXTqDA8qqFLbkrpE6FeXVBy2GLf7ewqbbYE="/>
+
+        <!--Developers should always provide custom values for each of {YOUR_LABEL_NAME} and {YOUR_INTENT_NAME}.
+        Do not reuse HERE SDK defaults.-->
+        <meta-data
+            android:name="INTENT_NAME"
+            android:value="{YOUR_INTENT_NAME}" />
+        <service
+            android:name="com.here.android.mpa.service.MapService"
+            android:label="{YOUR_LABEL_NAME}"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="{YOUR_INTENT_NAME}"></action>
+            </intent-filter>
+        </service>
+
+        <service android:name=".ForegroundService" />
+    </application>
+
+</manifest>
