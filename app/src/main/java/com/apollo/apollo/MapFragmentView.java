@@ -283,37 +283,37 @@ public class MapFragmentView {
     }
 
     private void initNaviControlButton() {
-        m_naviControlButton = m_activity.findViewById(R.id.naviCtrlButton);
-        m_naviControlButton.setText(R.string.start_navi);
+//        m_naviControlButton = m_activity.findViewById(R.id.naviCtrlButton);
+//        m_naviControlButton.setText(R.string.start_navi);
 
-        m_naviControlButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-
-            public void onClick(View v) {
-                /*
-                 * To start a turn-by-turn navigation, a concrete route object is required.We use
-                 * the same steps from Routing sample app to create a route from 4350 Still Creek Dr
-                 * to Langley BC without going on HWY.
-                 *
-                 * The route calculation requires local map data.Unless there is pre-downloaded map
-                 * data on device by utilizing MapLoader APIs,it's not recommended to trigger the
-                 * route calculation immediately after the MapEngine is initialized.The
-                 * INSUFFICIENT_MAP_DATA error code may be returned by CoreRouter in this case.
-                 *
-                 */
-                if (m_route == null) {
-                    createRoute();
-                } else {
-                    m_navigationManager.stop();
-                    /*
-                     * Restore the map orientation to show entire route on screen
-                     */
-                    m_map.zoomTo(m_geoBoundingBox, Map.Animation.NONE, 0f);
-                    m_naviControlButton.setText(R.string.start_navi);
-                    m_route = null;
-                }
-            }
-        });
+//        m_naviControlButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//
+//            public void onClick(View v) {
+//                /*
+//                 * To start a turn-by-turn navigation, a concrete route object is required.We use
+//                 * the same steps from Routing sample app to create a route from 4350 Still Creek Dr
+//                 * to Langley BC without going on HWY.
+//                 *
+//                 * The route calculation requires local map data.Unless there is pre-downloaded map
+//                 * data on device by utilizing MapLoader APIs,it's not recommended to trigger the
+//                 * route calculation immediately after the MapEngine is initialized.The
+//                 * INSUFFICIENT_MAP_DATA error code may be returned by CoreRouter in this case.
+//                 *
+//                 */
+//                if (m_route == null) {
+//                    createRoute();
+//                } else {
+//                    m_navigationManager.stop();
+//                    /*
+//                     * Restore the map orientation to show entire route on screen
+//                     */
+//                    m_map.zoomTo(m_geoBoundingBox, Map.Animation.NONE, 0f);
+//                    m_naviControlButton.setText(R.string.start_navi);
+//                    m_route = null;
+//                }
+//            }
+//        });
     }
 
     /*
@@ -343,7 +343,7 @@ public class MapFragmentView {
     }
 
     private void startNavigation() {
-        m_naviControlButton.setText(R.string.stop_navi);
+//        m_naviControlButton.setText(R.string.stop_navi);
         /* Configure Navigation manager to launch navigation on current map */
         m_navigationManager.setMap(m_map);
 
@@ -491,6 +491,10 @@ public class MapFragmentView {
         }
     };
 
+    public Map getMap() {
+        return m_map;
+    }
+
     private NavigationManager.NavigationManagerEventListener m_navigationManagerEventListener = new NavigationManager.NavigationManagerEventListener() {
         @Override
         public void onRunningStateChanged() {
@@ -539,6 +543,10 @@ public class MapFragmentView {
         }
 
     };
+
+    public GeoCoordinate getCoordinate() {
+        return m_geoCoordinate;
+    }
 
     public void onDestroy() {
         Log.d(TAG, "Destroying MapFragmentView");

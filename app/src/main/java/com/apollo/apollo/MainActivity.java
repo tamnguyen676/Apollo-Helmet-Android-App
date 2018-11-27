@@ -9,37 +9,55 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Handler;
 import android.provider.ContactsContract;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.SearchEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.arlib.floatingsearchview.FloatingSearchView;
+import com.arlib.floatingsearchview.suggestions.SearchSuggestionsAdapter;
+import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.here.android.mpa.common.GeoCoordinate;
+import com.here.android.mpa.mapping.Map;
+import com.here.android.mpa.search.DiscoveryResult;
+import com.here.android.mpa.search.DiscoveryResultPage;
+import com.here.android.mpa.search.ErrorCode;
+import com.here.android.mpa.search.PlaceLink;
+import com.here.android.mpa.search.ResultListener;
+import com.here.android.mpa.search.SearchRequest;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 // Test comment 2
-public class MainActivity extends AppCompatActivity implements BottomNavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends AppCompatActivity
+        implements BottomNavigationView.OnNavigationItemSelectedListener, DistanceCalculator {
 
     protected Handler mHandler; // handler that gets info from Bluetooth service
 
@@ -73,9 +91,11 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
     private MapFragmentView m_mapFragmentView;
     private BottomNavigationView bottomNavigationView;
-
+    private FloatingSearchView floatingSearchView;
     private View container;
     private View mapContainer;
+
+    private List<DiscoveryResult> discoveryResultList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
         container = findViewById(R.id.container);
         mapContainer = findViewById(R.id.mapcontainer);
+        floatingSearchView = findViewById(R.id.floatingSearchView);
 
         mDatabaseHelper = new DatabaseHelper(this);
 
@@ -115,10 +136,69 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         bottomNavigationView.setSelectedItemId(R.id.navigation_navigation);
         bottomNavigationView.setOnNavigationItemSelectedListener(this);
 
+        floatingSearchView.setOnBindSuggestionCallback(new SearchSuggestionsAdapter.OnBindSuggestionCallback() {
+            @Override
+            public void onBindSuggestion(View suggestionView, ImageView leftIcon, TextView textView, SearchSuggestion item, int itemPosition) {
+
+                // Cast to DestinationSuggestion to use custom methods
+                DestinationSuggestion destinationSuggestion = (DestinationSuggestion) item;
+
+                TextDrawable tempDrawable =
+                        new TextDrawable(getDistanceMiles(
+                                m_mapFragmentView.getCoordinate(),
+                                destinationSuggestion.getCoordinate()));
+
+                leftIcon.setImageDrawable(tempDrawable);
+
+                String text =
+                        "<font color=\"" + "#000000" + "\">" + destinationSuggestion.getName() + "</font>"
+                        +"<br>" + "<font color=\"" + "#727272" + "\">" + destinationSuggestion.getAddress() + "</font>";
+
+                textView.setText(Html.fromHtml(text));
+            }
+        });
+
+        floatingSearchView.setOnQueryChangeListener(new FloatingSearchView.OnQueryChangeListener() {
+            @Override
+            public void onSearchTextChanged(String oldQuery, String newQuery) {
+
+                SearchRequest searchRequest = new SearchRequest(newQuery);
+                searchRequest.setCollectionSize(10);
+                searchRequest.setSearchCenter(m_mapFragmentView.getMap().getCenter());
+                searchRequest.execute(discoveryResultPageListener);
+
+            }
+        });
+
 
         requestPermissions();
-        scanDevices();
+       // scanDevices();
     }
+
+    private ResultListener<DiscoveryResultPage> discoveryResultPageListener = new ResultListener<DiscoveryResultPage>() {
+        @Override
+        public void onCompleted(DiscoveryResultPage discoveryResultPage, ErrorCode errorCode) {
+            if (errorCode == ErrorCode.NONE) {
+                discoveryResultList = discoveryResultPage.getItems();
+
+                List<DestinationSuggestion> suggestList = new ArrayList<>();
+                for (DiscoveryResult result: discoveryResultList) {
+                    if (result.getResultType() == DiscoveryResult.ResultType.PLACE) {
+                        suggestList.add(new DestinationSuggestion(
+                                result.getTitle(),
+                                result.getVicinity().replace("<br/>", " "),
+                                ((PlaceLink) result).getPosition()
+                        ));
+                    }
+                }
+
+                floatingSearchView.swapSuggestions(suggestList);
+            }
+            else {
+                Log.e(TAG, errorCode.toString());
+            }
+        }
+    };
 
     // Creates a BroadcastReceiver that handles when a BluetoothDevice is found
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
