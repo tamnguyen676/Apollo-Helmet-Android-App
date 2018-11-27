@@ -96,6 +96,7 @@ public class MainActivity extends AppCompatActivity
     private View mapContainer;
 
     private List<DiscoveryResult> discoveryResultList;
+    private ResultListener<DiscoveryResultPage> discoveryResultPageListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,69 +137,12 @@ public class MainActivity extends AppCompatActivity
         bottomNavigationView.setSelectedItemId(R.id.navigation_navigation);
         bottomNavigationView.setOnNavigationItemSelectedListener(this);
 
-        floatingSearchView.setOnBindSuggestionCallback(new SearchSuggestionsAdapter.OnBindSuggestionCallback() {
-            @Override
-            public void onBindSuggestion(View suggestionView, ImageView leftIcon, TextView textView, SearchSuggestion item, int itemPosition) {
-
-                // Cast to DestinationSuggestion to use custom methods
-                DestinationSuggestion destinationSuggestion = (DestinationSuggestion) item;
-
-                TextDrawable tempDrawable =
-                        new TextDrawable(getDistanceMiles(
-                                m_mapFragmentView.getCoordinate(),
-                                destinationSuggestion.getCoordinate()));
-
-                leftIcon.setImageDrawable(tempDrawable);
-
-                String text =
-                        "<font color=\"" + "#000000" + "\">" + destinationSuggestion.getName() + "</font>"
-                        +"<br>" + "<font color=\"" + "#727272" + "\">" + destinationSuggestion.getAddress() + "</font>";
-
-                textView.setText(Html.fromHtml(text));
-            }
-        });
-
-        floatingSearchView.setOnQueryChangeListener(new FloatingSearchView.OnQueryChangeListener() {
-            @Override
-            public void onSearchTextChanged(String oldQuery, String newQuery) {
-
-                SearchRequest searchRequest = new SearchRequest(newQuery);
-                searchRequest.setCollectionSize(10);
-                searchRequest.setSearchCenter(m_mapFragmentView.getMap().getCenter());
-                searchRequest.execute(discoveryResultPageListener);
-
-            }
-        });
-
+        initSearchBar();
 
         requestPermissions();
+
        // scanDevices();
     }
-
-    private ResultListener<DiscoveryResultPage> discoveryResultPageListener = new ResultListener<DiscoveryResultPage>() {
-        @Override
-        public void onCompleted(DiscoveryResultPage discoveryResultPage, ErrorCode errorCode) {
-            if (errorCode == ErrorCode.NONE) {
-                discoveryResultList = discoveryResultPage.getItems();
-
-                List<DestinationSuggestion> suggestList = new ArrayList<>();
-                for (DiscoveryResult result: discoveryResultList) {
-                    if (result.getResultType() == DiscoveryResult.ResultType.PLACE) {
-                        suggestList.add(new DestinationSuggestion(
-                                result.getTitle(),
-                                result.getVicinity().replace("<br/>", " "),
-                                ((PlaceLink) result).getPosition()
-                        ));
-                    }
-                }
-
-                floatingSearchView.swapSuggestions(suggestList);
-            }
-            else {
-                Log.e(TAG, errorCode.toString());
-            }
-        }
-    };
 
     // Creates a BroadcastReceiver that handles when a BluetoothDevice is found
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -313,7 +257,7 @@ public class MainActivity extends AppCompatActivity
 //        // get SMS permission
 //        checkSMSPermission();
 //        checkReadPhoneStatePermission();
-        
+
 
         // If already discovering, cancel it so that a new scan can be performed.
         if (mBtAdapter.isDiscovering()) {
@@ -549,6 +493,84 @@ public class MainActivity extends AppCompatActivity
         public static final int MESSAGE_WRITE = 1;
         public static final int MESSAGE_TOAST = 2;
     }
+
+    /**
+     * Initializes the search bar to be able to provide search suggestions
+     */
+    private void initSearchBar() {
+
+        // Implement callback method for when results are found
+        discoveryResultPageListener = new ResultListener<DiscoveryResultPage>() {
+            @Override
+            public void onCompleted(DiscoveryResultPage discoveryResultPage, ErrorCode errorCode) {
+                if (errorCode == ErrorCode.NONE) {
+                    discoveryResultList = discoveryResultPage.getItems();
+
+                    List<DestinationSuggestion> suggestList = new ArrayList<>();
+
+                    // For each DiscoveryResult, make a corresponding DestinationSuggestion object
+                    for (DiscoveryResult result: discoveryResultList) {
+                        if (result.getResultType() == DiscoveryResult.ResultType.PLACE) {
+                            suggestList.add(new DestinationSuggestion(
+                                    result.getTitle(),
+                                    result.getVicinity().replace("<br/>", " "),
+                                    ((PlaceLink) result).getPosition()
+                            ));
+                        }
+                    }
+
+                    // This is what causes the list to be shown. onBindSuggestion is called right after
+                    floatingSearchView.swapSuggestions(suggestList);
+                }
+                else {
+                    Log.e(TAG, errorCode.toString());
+                }
+            }
+        };
+
+        // Implements callback method to bind the Views that show the suggestions to user
+        floatingSearchView.setOnBindSuggestionCallback(new SearchSuggestionsAdapter.OnBindSuggestionCallback() {
+            @Override
+            public void onBindSuggestion(View suggestionView, ImageView leftIcon, TextView textView, SearchSuggestion item, int itemPosition) {
+
+                // Cast to DestinationSuggestion to use custom methods
+                DestinationSuggestion destinationSuggestion = (DestinationSuggestion) item;
+
+                // Creates drawable image with text being the distance to the location
+                TextDrawable tempDrawable =
+                        new TextDrawable(getDistanceMiles(
+                                m_mapFragmentView.getCoordinate(),
+                                destinationSuggestion.getCoordinate()));
+
+                // Set the left icon to the drawable created
+                leftIcon.setImageDrawable(tempDrawable);
+
+                // Format in HTML the text shown
+                String text =
+                        "<font color=\"" + "#000000" + "\">" + destinationSuggestion.getName() + "</font>"
+                                +"<br>" + "<font color=\"" + "#727272" + "\">" + destinationSuggestion.getAddress() + "</font>";
+
+                textView.setText(Html.fromHtml(text));
+
+                floatingSearchView.hideProgress(); // Hide loading animation
+            }
+        });
+
+        // Implements callback method for when text is entered into search bar
+        floatingSearchView.setOnQueryChangeListener(new FloatingSearchView.OnQueryChangeListener() {
+            @Override
+            public void onSearchTextChanged(String oldQuery, String newQuery) {
+                floatingSearchView.showProgress(); // Show loading animation
+
+                SearchRequest searchRequest = new SearchRequest(newQuery);
+                searchRequest.setCollectionSize(10); // Max of 10 results per page
+                searchRequest.setSearchCenter(m_mapFragmentView.getMap().getCenter());
+                searchRequest.execute(discoveryResultPageListener);
+
+            }
+        });
+    }
+
 
     protected void createLocationRequest() {
         mLocationRequest = new LocationRequest();
