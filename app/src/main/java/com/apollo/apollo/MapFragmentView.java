@@ -32,6 +32,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.arlib.floatingsearchview.FloatingSearchView;
 import com.here.android.mpa.common.GeoBoundingBox;
 import com.here.android.mpa.common.GeoCoordinate;
 import com.here.android.mpa.common.GeoPosition;
@@ -85,11 +86,13 @@ public class MapFragmentView {
     private EditText m_destination;
     private Maneuver maneuver;
     private double lastDistance;
+    private FloatingSearchView floatingSearchView;
 
     private static String TAG = "MapFragmentView";
 
-    public MapFragmentView(Activity activity) {
+    public MapFragmentView(Activity activity, FloatingSearchView floatingSearchView) {
         m_activity = activity;
+        this.floatingSearchView = floatingSearchView;
         m_destination = m_activity.findViewById(R.id.destination);
 
         initMapFragment();
@@ -171,7 +174,7 @@ public class MapFragmentView {
         Log.d(TAG, m_geoCoordinate.getLatitude() + " " + m_geoCoordinate.getLongitude());
     }
 
-    private void createRoute() {
+    private void createRoute(GeoCoordinate coordinate) {
         /* Initialize a CoreRouter */
 
         /* Initialize a RoutePlan */
@@ -186,7 +189,7 @@ public class MapFragmentView {
         /* Other transport modes are also available e.g Pedestrian */
         routeOptions.setTransportMode(RouteOptions.TransportMode.CAR);
         /* Disable highway in this route. */
-        routeOptions.setHighwaysAllowed(false);
+        routeOptions.setHighwaysAllowed(true);
         /* Calculate the shortest route available. */
         routeOptions.setRouteType(RouteOptions.Type.SHORTEST);
         /* Calculate 1 route. */
@@ -194,35 +197,10 @@ public class MapFragmentView {
         /* Finally set the route option */
         routePlan.setRouteOptions(routeOptions);
 
-        final GeoCoordinate[] dest = new GeoCoordinate[1];
+        routePlan.addWaypoint(new RouteWaypoint(m_geoCoordinate));
+        routePlan.addWaypoint(new RouteWaypoint(coordinate));
 
-        GeocodeRequest2 request = new GeocodeRequest2(m_destination.getText().toString())
-                .setSearchArea(m_geoCoordinate, 1000);
-
-        request.execute(new ResultListener<List<GeocodeResult>>() {
-            @Override
-            public void onCompleted(List<GeocodeResult> data, ErrorCode error) {
-                if (error != ErrorCode.NONE) {
-                    Log.e(TAG + "/"+ "GeocodeListener", error.toString());
-                } else {
-                    Log.d(TAG + "/"+ "GeocodeListener", "Received data: " + data.toString());
-                    dest[0] = data.get(0).getLocation().getCoordinate();
-                    Log.d(TAG + "/"+ "GeocodeListener", "DEST: " + dest[0].toString());
-
-                    RouteWaypoint startPoint = new RouteWaypoint(new GeoCoordinate(m_geoCoordinate.getLatitude(), m_geoCoordinate.getLongitude()));
-                    RouteWaypoint destination = new RouteWaypoint(data.get(0).getLocation().getCoordinate());
-
-                    /* Add both waypoints to the route plan */
-                    routePlan.addWaypoint(startPoint);
-
-                    routePlan.addWaypoint(destination);
-
-                    Log.d(TAG, "Before calculate route function");
-
-                    calculateRoute(routePlan);
-                }
-            }
-        });
+        calculateRoute(routePlan);
     }
 
     private void calculateRoute(RoutePlan routePlan) {
@@ -376,6 +354,8 @@ public class MapFragmentView {
 
         AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
+
+
         /*
          * Set the map update mode to ROADVIEW.This will enable the automatic map movement based on
          * the current location.If user gestures are expected during the navigation, it's
@@ -512,6 +492,7 @@ public class MapFragmentView {
             stopForegroundService();
 
             Log.d(TAG, "FINISHED NAVIGATING");
+            floatingSearchView.setVisibility(View.VISIBLE);
 
             JSONObject json = new JSONObject();
 
@@ -546,6 +527,15 @@ public class MapFragmentView {
 
     public GeoCoordinate getCoordinate() {
         return m_geoCoordinate;
+    }
+
+    /**
+     * Method called by other classes to start navigation given GeoCoordinate
+     * @param coordinate
+     */
+    public void startNavigation(GeoCoordinate coordinate) {
+        createRoute(coordinate);
+        floatingSearchView.setVisibility(View.GONE);
     }
 
     public void onDestroy() {

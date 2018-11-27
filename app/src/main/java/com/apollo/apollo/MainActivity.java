@@ -98,6 +98,8 @@ public class MainActivity extends AppCompatActivity
     private List<DiscoveryResult> discoveryResultList;
     private ResultListener<DiscoveryResultPage> discoveryResultPageListener;
 
+    private boolean loadingSuggestions = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -376,7 +378,7 @@ public class MainActivity extends AppCompatActivity
                  * All permission requests are being handled.Create map fragment view.Please note
                  * the HERE SDK requires all permissions defined above to operate properly.
                  */
-                m_mapFragmentView = new MapFragmentView(this);
+                m_mapFragmentView = new MapFragmentView(this, floatingSearchView);
                 break;
             }
             default:
@@ -521,6 +523,8 @@ public class MainActivity extends AppCompatActivity
 
                     // This is what causes the list to be shown. onBindSuggestion is called right after
                     floatingSearchView.swapSuggestions(suggestList);
+                    floatingSearchView.hideProgress(); // Hide loading animation
+                    loadingSuggestions = false;
                 }
                 else {
                     Log.e(TAG, errorCode.toString());
@@ -553,6 +557,7 @@ public class MainActivity extends AppCompatActivity
                 textView.setText(Html.fromHtml(text));
 
                 floatingSearchView.hideProgress(); // Hide loading animation
+                loadingSuggestions = false;
             }
         });
 
@@ -560,7 +565,12 @@ public class MainActivity extends AppCompatActivity
         floatingSearchView.setOnQueryChangeListener(new FloatingSearchView.OnQueryChangeListener() {
             @Override
             public void onSearchTextChanged(String oldQuery, String newQuery) {
-                floatingSearchView.showProgress(); // Show loading animation
+
+                if (!loadingSuggestions) {
+                    loadingSuggestions = true;
+                    floatingSearchView.showProgress(); // Show loading animation
+                }
+
 
                 SearchRequest searchRequest = new SearchRequest(newQuery);
                 searchRequest.setCollectionSize(10); // Max of 10 results per page
@@ -568,6 +578,22 @@ public class MainActivity extends AppCompatActivity
                 searchRequest.execute(discoveryResultPageListener);
 
             }
+        });
+
+        floatingSearchView.setOnSearchListener(new FloatingSearchView.OnSearchListener() {
+            @Override
+            public void onSuggestionClicked(SearchSuggestion searchSuggestion) {
+                DestinationSuggestion destinationSuggestion
+                        = (DestinationSuggestion) searchSuggestion;
+
+                m_mapFragmentView.startNavigation(destinationSuggestion.getCoordinate());
+
+                floatingSearchView.hideProgress(); // Hide loading animation
+                loadingSuggestions = false;
+            }
+
+            @Override
+            public void onSearchAction(String currentQuery) {}
         });
     }
 
@@ -577,6 +603,11 @@ public class MainActivity extends AppCompatActivity
         mLocationRequest.setInterval(10000);
         mLocationRequest.setFastestInterval(5000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+    }
+
+    @Override
+    public void onBackPressed() {
+        moveTaskToBack(true);
     }
 
 
