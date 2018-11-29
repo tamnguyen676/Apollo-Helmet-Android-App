@@ -19,4 +19,8 @@ public interface DistanceCalculator {
 
         return String.format(Locale.US, "%.1f mi", distance);
     }
+
+    default double toMeters(double miles) {
+        return miles / 0.000621371;
+    }
 }

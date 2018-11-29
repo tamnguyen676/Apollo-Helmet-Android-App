@@ -14,14 +14,18 @@ public class ConnectThread extends MainActivity implements Runnable {
     private final BluetoothDevice mmDevice;
     private ConnectedThread connectedThread;
     private DatabaseHelper mDatabaseHelper;
+    private ConnectedThreadHolder connectedThreadHolder;
 
-    public ConnectThread(BluetoothDevice device, DatabaseHelper mDatabaseHelper) {
+    public ConnectThread(BluetoothDevice device,
+                         DatabaseHelper mDatabaseHelper,
+                         ConnectedThreadHolder connectedThreadHolder) {
         // Use a temporary object that is later assigned to mmSocket
         // because mmSocket is final.
         BluetoothSocket tmp = null;
         mmDevice = device;
 
         this.mDatabaseHelper = mDatabaseHelper;
+        this.connectedThreadHolder = connectedThreadHolder;
 
         try {
             // Get a BluetoothSocket to connect with the given BluetoothDevice.
@@ -57,6 +61,7 @@ public class ConnectThread extends MainActivity implements Runnable {
         Thread thread = new Thread(connectedThread);
         thread.start();
 
+        connectedThreadHolder.setConnectedThread(connectedThread);
         connectedThread.write("Connected!");
 
         Log.d(TAG, "Should have sent message");

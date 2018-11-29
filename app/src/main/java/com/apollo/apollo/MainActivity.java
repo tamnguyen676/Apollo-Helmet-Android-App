@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity
     private LocationCallback mLocationCallback;
     private boolean mRequestingLocationUpdates = false;
 
-    private ConnectedThread connectedThread;
+    private ConnectedThreadHolder connectedThreadHolder = new ConnectedThreadHolder();
     private ConnectThread connectThread;
 
     BluetoothAdapter mBtAdapter;
@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity
 
         requestPermissions();
 
-       // scanDevices();
+        scanDevices();
     }
 
     // Creates a BroadcastReceiver that handles when a BluetoothDevice is found
@@ -229,12 +229,12 @@ public class MainActivity extends AppCompatActivity
      * Launches the default contact manager application and allows user to pick a contact
      * @param v
      */
-    public void addContact(View v) {
+    public void addContact() {
         Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
         startActivityForResult(intent, PICK_CONTACT);
     }
 
-    public void viewContacts(View v) {
+    public void viewContacts() {
         Intent intent = new Intent(MainActivity.this, ListContactActivity.class);
         startActivity(intent);
     }
@@ -260,6 +260,7 @@ public class MainActivity extends AppCompatActivity
 //        checkSMSPermission();
 //        checkReadPhoneStatePermission();
 
+        Log.d(TAG, "Scanning...");
 
         // If already discovering, cancel it so that a new scan can be performed.
         if (mBtAdapter.isDiscovering()) {
@@ -281,7 +282,7 @@ public class MainActivity extends AppCompatActivity
         Log.d("Socket", "In the connectSocket method");
         mBtAdapter.cancelDiscovery();
 
-        connectThread = new ConnectThread(mBtDevice, mDatabaseHelper);
+        connectThread = new ConnectThread(mBtDevice, mDatabaseHelper, connectedThreadHolder);
         Thread thread = new Thread(connectThread);
         thread.start();
     }
@@ -378,7 +379,9 @@ public class MainActivity extends AppCompatActivity
                  * All permission requests are being handled.Create map fragment view.Please note
                  * the HERE SDK requires all permissions defined above to operate properly.
                  */
-                m_mapFragmentView = new MapFragmentView(this, floatingSearchView);
+                m_mapFragmentView = new MapFragmentView(this,
+                        floatingSearchView,
+                        connectedThreadHolder);
                 break;
             }
             default:
@@ -397,62 +400,9 @@ public class MainActivity extends AppCompatActivity
                 null);
     }
 
-    /**
-     * Sends GPS coordinates through the bluetooth socket
-     * @param v View
-     */
-    public void sendLocation(View v) {
-        checkLocationPermission();
-        createLocationRequest();
-
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
-        mLocationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                if (locationResult == null) {
-                    Log.d(TAG, "Location result not found.");
-                    return;
-                }
-
-                if (connectThread != null) {
-                    connectedThread = connectThread.getConnectedThread();
-                }
-                else {
-                    Log.d(TAG, "connectThread could not be accessed");
-                }
-
-
-                for (Location location: locationResult.getLocations()) {
-                    if (connectedThread != null) {
-                        if (location != null) {
-                            origin = location.toString();
-                            connectedThread.write("Sent message: Lat: " + location.getLatitude() + " Long: " + location.getLongitude() + "\n");
-                            Log.d(TAG, "Sent message: Lat: " + location.getLatitude() + " Long: " + location.getLongitude() + "\n");
-                        } else {
-                            Log.d(TAG, "Could not obtain location");
-                        }
-                    }
-                    else {
-                        Log.d(TAG, "Could not access connectedThread");
-                    }
-                }
-            }
-        };
-
-        mRequestingLocationUpdates = true;
-
-        if (mRequestingLocationUpdates) startLocationUpdates();
-    }
-
     private void handleBluetoothNotFound() {
        DialogFragment bluetoothNotFoundFragment = new BluetoothNotFoundFragment();
        bluetoothNotFoundFragment.show(getSupportFragmentManager(), "not_found");
-    }
-
-    private void sendNav(View v) {
-        NavThread navThread = new NavThread(progressBar, status, dest, origin);
-        navThread.execute();
     }
 
     @Override
@@ -461,11 +411,14 @@ public class MainActivity extends AppCompatActivity
         Log.d(TAG, "onDestroy called");
 
         // Don't forget to unregister the ACTION_FOUND receiver.
+        if (m_mapFragmentView != null) {
+            m_mapFragmentView.onDestroy();
+        }
         unregisterReceiver(mReceiver);
     }
 
-    private HelmetFragment helmetFragment = new HelmetFragment();
     private EmergencyFragment emergencyFragment = new EmergencyFragment();
+    private HelmetFragment helmetFragment = new HelmetFragment();
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
@@ -478,6 +431,7 @@ public class MainActivity extends AppCompatActivity
             case R.id.navigation_contacts:
                 container.setVisibility(View.VISIBLE);
                 mapContainer.setVisibility(View.GONE);
+                emergencyFragment.setList(mDatabaseHelper.getData());
                 getSupportFragmentManager().beginTransaction().replace(R.id.container, emergencyFragment).commit();
                 return true;
             case R.id.navigation_helmet:

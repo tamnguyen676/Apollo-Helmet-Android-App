@@ -25,9 +25,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -51,10 +49,6 @@ import com.here.android.mpa.routing.RouteResult;
 import com.here.android.mpa.routing.RouteWaypoint;
 import com.here.android.mpa.routing.Router;
 import com.here.android.mpa.routing.RoutingError;
-import com.here.android.mpa.search.ErrorCode;
-import com.here.android.mpa.search.GeocodeRequest2;
-import com.here.android.mpa.search.GeocodeResult;
-import com.here.android.mpa.search.ResultListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -63,8 +57,6 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Locale;
-
-import androidx.annotation.Nullable;
 
 /**
  * This class encapsulates the properties and functionality of the Map view.It also triggers a
@@ -87,12 +79,16 @@ public class MapFragmentView {
     private Maneuver maneuver;
     private double lastDistance;
     private FloatingSearchView floatingSearchView;
+    private ConnectedThreadHolder connectedThreadHolder;
 
     private static String TAG = "MapFragmentView";
 
-    public MapFragmentView(Activity activity, FloatingSearchView floatingSearchView) {
+    public MapFragmentView(Activity activity,
+                           FloatingSearchView floatingSearchView,
+                           ConnectedThreadHolder connectedThread) {
         m_activity = activity;
         this.floatingSearchView = floatingSearchView;
+        this.connectedThreadHolder = connectedThread;
         m_destination = m_activity.findViewById(R.id.destination);
 
         initMapFragment();
@@ -104,10 +100,6 @@ public class MapFragmentView {
     @SuppressWarnings("deprecation")
     private MapFragment getMapFragment() {
         return (MapFragment) m_activity.getFragmentManager().findFragmentById(R.id.mapfragment);
-    }
-
-    public void setMainActivity(Activity a) {
-        m_activity = a;
     }
 
     private void initMapFragment() {
@@ -345,7 +337,7 @@ public class MapFragmentView {
         });
         alertDialogBuilder.setPositiveButton("Simulation",new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialoginterface, int i) {
-                m_navigationManager.simulate(m_route,180);//Simualtion speed is set to 60 m/s
+                m_navigationManager.simulate(m_route,60);//Simualtion speed is set to 60 m/s
                 m_map.setTilt(60);
                 Log.d("MapFragment", "Simulating");
                 startForegroundService();
@@ -410,7 +402,12 @@ public class MapFragmentView {
                     json.put("newManeuver", true);
 
 //                    Log.d("onNewInstructionEvent", maneuver.getAction().toString());
-                    Log.d("onNewInstructionEvent", json.toString());
+
+                    if (connectedThreadHolder.getConnectedThread() != null) {
+                        Log.d(TAG, "WRITING");
+                        Log.d("onNewInstructionEvent", json.toString());
+                        connectedThreadHolder.getConnectedThread().write(json.toString());
+                    }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -442,7 +439,11 @@ public class MapFragmentView {
                         json.put("newManeuver", false);
                         json.put("end", false);
 
-                        Log.d("onPositionUpdate", json.toString());
+
+                        if (connectedThreadHolder.getConnectedThread() != null) {
+                            Log.d("onPositionUpdate", json.toString());
+                            connectedThreadHolder.getConnectedThread().write(json.toString());
+                        }
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -458,6 +459,9 @@ public class MapFragmentView {
                         json.put("end", false);
 
                         Log.d("onPositionUpdate", json.toString());
+                        if (connectedThreadHolder.getConnectedThread() != null) {
+                            connectedThreadHolder.getConnectedThread().write(json.toString());
+                        }
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }

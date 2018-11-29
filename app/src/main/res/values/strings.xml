@@ -3,7 +3,7 @@
     <string name="dialog_message">Your device does not support bluetooth. This app is incompatible with your device.</string>
     <string name="dialog_title">Bluetooth Not Found</string>
     <string name="exit">Exit</string>
-    <string name='bt_device'>Tam</string>
+    <string name='bt_device'>raspberrypi</string>
     <string name="add_contact">Add Emergency Contact</string>
     <string name="dataList_title">Emergency Contact List</string>>
     <string name="editData_title">Contact Information</string>

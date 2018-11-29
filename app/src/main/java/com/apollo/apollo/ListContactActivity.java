@@ -31,11 +31,9 @@ public class ListContactActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.data_list);
-        mListView = (ListView) findViewById(R.id.listView);
+        mListView = (ListView) findViewById(android.R.id.list);
         mDatabaseHelper = new DatabaseHelper(this);
         populateListView();
-
-
     }
 
     /*Refresh the screen if activity is restarted*/
@@ -43,7 +41,7 @@ public class ListContactActivity extends AppCompatActivity {
     protected void onRestart() {
         super.onRestart();
         setContentView(R.layout.data_list);
-        mListView = (ListView) findViewById(R.id.listView);
+        mListView = (ListView) findViewById(android.R.id.list);
         mDatabaseHelper = new DatabaseHelper(this);
         populateListView();
     }
