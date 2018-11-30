@@ -64,7 +64,7 @@ import java.util.Locale;
  * bundled within the SDK package to be used out-of-box, please refer to the Developer's guide for
  * the usage.
  */
-public class MapFragmentView {
+public class MapFragmentView implements DistanceCalculator {
     private MapFragment m_mapFragment;
     private Activity m_activity;
     private Button m_naviControlButton;
@@ -80,6 +80,7 @@ public class MapFragmentView {
     private double lastDistance;
     private FloatingSearchView floatingSearchView;
     private ConnectedThreadHolder connectedThreadHolder;
+    private int lastDistanceFeet = 0;
 
     private static String TAG = "MapFragmentView";
 
@@ -92,7 +93,6 @@ public class MapFragmentView {
         m_destination = m_activity.findViewById(R.id.destination);
 
         initMapFragment();
-        initNaviControlButton();
     }
 
     // Google has deprecated android.app.Fragment class. It is used in current SDK implementation.
@@ -252,40 +252,6 @@ public class MapFragmentView {
                 });
     }
 
-    private void initNaviControlButton() {
-//        m_naviControlButton = m_activity.findViewById(R.id.naviCtrlButton);
-//        m_naviControlButton.setText(R.string.start_navi);
-
-//        m_naviControlButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//
-//            public void onClick(View v) {
-//                /*
-//                 * To start a turn-by-turn navigation, a concrete route object is required.We use
-//                 * the same steps from Routing sample app to create a route from 4350 Still Creek Dr
-//                 * to Langley BC without going on HWY.
-//                 *
-//                 * The route calculation requires local map data.Unless there is pre-downloaded map
-//                 * data on device by utilizing MapLoader APIs,it's not recommended to trigger the
-//                 * route calculation immediately after the MapEngine is initialized.The
-//                 * INSUFFICIENT_MAP_DATA error code may be returned by CoreRouter in this case.
-//                 *
-//                 */
-//                if (m_route == null) {
-//                    createRoute();
-//                } else {
-//                    m_navigationManager.stop();
-//                    /*
-//                     * Restore the map orientation to show entire route on screen
-//                     */
-//                    m_map.zoomTo(m_geoBoundingBox, Map.Animation.NONE, 0f);
-//                    m_naviControlButton.setText(R.string.start_navi);
-//                    m_route = null;
-//                }
-//            }
-//        });
-    }
-
     /*
      * Android 8.0 (API level 26) limits how frequently background apps can retrieve the user's
      * current location. Apps can receive location updates only a few times each hour.
@@ -390,14 +356,36 @@ public class MapFragmentView {
             if (maneuver != null) {
                 JSONObject json = new JSONObject();
 
-                lastDistance = maneuver.getDistanceFromPreviousManeuver() * 0.000621371;
+                lastDistance = toMiles(maneuver.getDistanceFromPreviousManeuver());
 
-                double distance = maneuver.getDistanceFromPreviousManeuver() * 0.000621371;
+                double distance = toMiles(maneuver.getDistanceFromPreviousManeuver());
+
 
                 try {
                     json.put("turn", maneuver.getTurn().toString());
-                    json.put("distance", String.format(Locale.US, "%.1f mi", distance));
-                    json.put("road", maneuver.getNextRoadName().toString());
+
+                    if (distance > .19) { // Send in miles if more than 1000 ft
+                        json.put("distance", String.format(Locale.US, "%.1f mi", distance));
+                    }
+                    else {
+                        // Convert miles to feet
+                        distance = distance * 5280;
+
+                        // Round down numbers
+                        if (distance >= 1000) distance = 1000;
+                        else if (distance >= 100) {
+                            // Takes the first digit of the number and multiplies it by 100
+                            // Ex) 945 becomes 900
+                            distance = 100 * (("" + distance).charAt(0) - '0');
+                        }
+                        else {
+                            distance = 10 * (("" + distance).charAt(0) - '0');
+                        }
+
+                        json.put("distance", String.format(Locale.US, "%.0f ft", distance));
+                    }
+
+                    json.put("road", maneuver.getNextRoadName());
                     json.put("end", false);
                     json.put("newManeuver", true);
 
@@ -412,11 +400,6 @@ public class MapFragmentView {
                     e.printStackTrace();
                 }
 
-//                if (maneuver.getAction() != Maneuver.Action.END) {
-//                    Log.d(TAG, "Turn: " + maneuver.getTurn() + " Distance from prev: " + maneuver.getDistanceFromPreviousManeuver() + " Distance to next: "
-//                            + maneuver.getDistanceToNextManeuver() + " Road: " + maneuver.getNextRoadName()
-//                            + " Action: " + maneuver.getAction());
-//                }
             }
         }
     };
@@ -426,11 +409,34 @@ public class MapFragmentView {
         public void onPositionUpdated(GeoPosition geoPosition) {
             if (maneuver != null) {
 
-                double distance = geoPosition.getCoordinate()
-                                .distanceTo(maneuver.getCoordinate()) * 0.000621371;
+                double distance = toMiles(geoPosition.getCoordinate()
+                                .distanceTo(maneuver.getCoordinate()));
 
-                if (distance < .1) {
-                    distance *= 5280;
+                // .19 miles is roughly 1000 ft
+                if (distance < .19) {
+
+                    // Don't send if there hasn't been a change of about 100 ft (0.0189394 mi)
+                    if (lastDistance - distance < 0.0189394) {
+                        return;
+                    }
+
+                    lastDistance = distance;
+
+                    // Convert miles to feet
+                    distance = distance * 5280;
+
+                    // Rounds numbers
+                    if (distance >= 1000) distance = 1000;
+                    else if (distance >= 100) {
+                        // Takes the first digit of the number and multiplies it by 100
+                        // Ex) 945 becomes 900
+                        distance = 100 * (("" + distance).charAt(0) - '0');
+                    }
+                    else {
+                        // Don't bother sending anything smaller than 100 ft
+                        return;
+                    }
+
 
                     JSONObject json = new JSONObject();
 
@@ -466,11 +472,6 @@ public class MapFragmentView {
                         e.printStackTrace();
                     }
                 }
-
-
-
-
-//                Log.d("DISTANCE", "" + geoPosition.getCoordinate().distanceTo(maneuver.getCoordinate()));
             }
         }
     };
@@ -501,7 +502,7 @@ public class MapFragmentView {
 
             try {
                 json.put("end", true);
-                
+
                 if (connectedThreadHolder.getConnectedThread() != null) {
                     connectedThreadHolder.getConnectedThread().write(json.toString());
                 }

@@ -23,4 +23,5 @@ public interface DistanceCalculator {
     default double toMeters(double miles) {
         return miles / 0.000621371;
     }
+
 }
