@@ -100,6 +100,9 @@ public class MainActivity extends AppCompatActivity
 
     private boolean loadingSuggestions = false;
 
+    private EmergencyFragment emergencyFragment;
+    private HelmetFragment helmetFragment;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,6 +119,11 @@ public class MainActivity extends AppCompatActivity
         floatingSearchView = findViewById(R.id.floatingSearchView);
 
         mDatabaseHelper = new DatabaseHelper(this);
+
+        emergencyFragment = new EmergencyFragment();
+        emergencyFragment.setDatabaseHelper(mDatabaseHelper);
+
+        helmetFragment = new HelmetFragment();
 
 
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -184,7 +192,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
+        Log.d(TAG, "In onActivityResult");
         // After user has picked contact from their contact manager, add the result to the database
         if (requestCode == PICK_CONTACT && resultCode == RESULT_OK) {
             Uri contactUri = data.getData();
@@ -199,6 +207,15 @@ public class MainActivity extends AppCompatActivity
                     + cursor.getString(phoneNumIndex));
 
             addData(cursor.getString(nameIndex), cursor.getString(phoneNumIndex));
+        }
+        else {
+            super.onActivityResult(requestCode, resultCode, data);
+            emergencyFragment.setList(mDatabaseHelper.getData());
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .detach(emergencyFragment)
+                    .attach(emergencyFragment)
+                    .commit();
         }
     }
 
@@ -416,9 +433,6 @@ public class MainActivity extends AppCompatActivity
         }
         unregisterReceiver(mReceiver);
     }
-
-    private EmergencyFragment emergencyFragment = new EmergencyFragment();
-    private HelmetFragment helmetFragment = new HelmetFragment();
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
