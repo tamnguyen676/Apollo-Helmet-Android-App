@@ -495,13 +495,16 @@ public class MapFragmentView {
             Toast.makeText(m_activity, navigationMode + " was ended", Toast.LENGTH_SHORT).show();
             stopForegroundService();
 
-            Log.d(TAG, "FINISHED NAVIGATING");
             floatingSearchView.setVisibility(View.VISIBLE);
 
             JSONObject json = new JSONObject();
 
             try {
                 json.put("end", true);
+                
+                if (connectedThreadHolder.getConnectedThread() != null) {
+                    connectedThreadHolder.getConnectedThread().write(json.toString());
+                }
                 Log.d("onEnded", json.toString());
             } catch (JSONException e) {
                 e.printStackTrace();
