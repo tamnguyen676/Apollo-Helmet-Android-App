@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -74,11 +75,8 @@ public class EmergencyFragment extends androidx.fragment.app.ListFragment {
         while(data.moveToNext()){
             //get the value from the database in column 1
             //then add it to the ArrayList
-            String formatted = "<font color=\"" + "#000000" + "\">" + data.getString(1)
-                     + "<br>" + "<font color=\"" + "#F2F2F2" + "\">"
-                    + data.getString(2) + "</font>";
 
-            list.add(Html.fromHtml(formatted));
+            list.add(data.getString(1) + "\n" + data.getString(2));
         }
 
         contactsList = list;
@@ -139,13 +137,32 @@ public class EmergencyFragment extends androidx.fragment.app.ListFragment {
                     + cursor.getString(phoneNumIndex));
 
             addData(cursor.getString(nameIndex), cursor.getString(phoneNumIndex));
-
         }
     }
 
     @Override
     public void onListItemClick(ListView l, View v, int pos, long id) {
         super.onListItemClick(l, v, pos, id);
-        Toast.makeText(getActivity(), "Item " + pos + " was clicked", Toast.LENGTH_SHORT).show();
+
+        String name = contactsList.get(pos).toString().split("\n")[0];
+        Cursor data = databaseHelper.getItemID(name); //get the id associated with that name
+
+        int itemID = -1;
+        String itemPhone = "";
+        while(data.moveToNext()){
+            itemID = data.getInt(0);
+            itemPhone = data.getString(1);
+        }
+
+        databaseHelper.deleteName(itemID);
+        contactsList.remove(name + "\n" + itemPhone);
+
+        adapter = new ArrayAdapter<>(getContext(),
+                R.layout.contact_row, contactsList);
+
+
+        setListAdapter(adapter);
+
+        Toast.makeText(getActivity(), name + "\n" + itemPhone + " was deleted", Toast.LENGTH_SHORT).show();
     }
 }
