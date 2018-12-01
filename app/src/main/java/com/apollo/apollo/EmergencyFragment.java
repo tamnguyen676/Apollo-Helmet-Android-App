@@ -3,9 +3,11 @@ package com.apollo.apollo;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.provider.ContactsContract;
@@ -27,6 +29,8 @@ import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import androidx.appcompat.app.AlertDialog;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -144,25 +148,44 @@ public class EmergencyFragment extends androidx.fragment.app.ListFragment {
     public void onListItemClick(ListView l, View v, int pos, long id) {
         super.onListItemClick(l, v, pos, id);
 
-        String name = contactsList.get(pos).toString().split("\n")[0];
-        Cursor data = databaseHelper.getItemID(name); //get the id associated with that name
-
-        int itemID = -1;
-        String itemPhone = "";
-        while(data.moveToNext()){
-            itemID = data.getInt(0);
-            itemPhone = data.getString(1);
+        AlertDialog.Builder builder;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            builder = new AlertDialog.Builder(getContext(), android.R.style.Theme_Material_Dialog_Alert);
+        } else {
+            builder = new AlertDialog.Builder(getContext());
         }
+        builder.setTitle("Delete entry")
+                .setMessage("Are you sure you want to delete this entry?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        String name = contactsList.get(pos).toString().split("\n")[0];
+                        Cursor data = databaseHelper.getItemID(name); //get the id associated with that name
 
-        databaseHelper.deleteName(itemID);
-        contactsList.remove(name + "\n" + itemPhone);
+                        int itemID = -1;
+                        String itemPhone = "";
+                        while(data.moveToNext()){
+                            itemID = data.getInt(0);
+                            itemPhone = data.getString(1);
+                        }
 
-        adapter = new ArrayAdapter<>(getContext(),
-                R.layout.contact_row, contactsList);
+                        databaseHelper.deleteName(itemID);
+                        contactsList.remove(name + "\n" + itemPhone);
+
+                        adapter = new ArrayAdapter<>(getContext(),
+                                R.layout.contact_row, contactsList);
 
 
-        setListAdapter(adapter);
+                        setListAdapter(adapter);
 
-        Toast.makeText(getActivity(), name + "\n" + itemPhone + " was deleted", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), name + "\n" + itemPhone + " was deleted", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // do nothing
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 }
