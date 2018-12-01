@@ -46,6 +46,7 @@ public class EmergencyFragment extends androidx.fragment.app.ListFragment {
     private FloatingActionButton addButton;
     private DatabaseHelper databaseHelper;
     private ListAdapter adapter;
+    private TextView noContactsText;
     static final int PICK_CONTACT = 2;
 
     public EmergencyFragment() {
@@ -61,6 +62,7 @@ public class EmergencyFragment extends androidx.fragment.app.ListFragment {
 
 
         addButton = view.findViewById(R.id.addContactButton);
+        noContactsText = view.findViewById(R.id.noContactsText);
 
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -94,6 +96,9 @@ public class EmergencyFragment extends androidx.fragment.app.ListFragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        if (contactsList.isEmpty()) noContactsText.setVisibility(View.VISIBLE);
+        else noContactsText.setVisibility(View.GONE);
 
         adapter = new ArrayAdapter<CharSequence>(getContext(),
                 R.layout.contact_row, contactsList);
