@@ -37,9 +37,6 @@
             android:theme="@style/AppTheme">
         </activity>
 
-        <activity android:name=".ListContactActivity"
-                  android:label="@string/dataList_title"/>
-
         <activity android:name=".EditDataActivity"
                   android:label="@string/editData_title"/>
 

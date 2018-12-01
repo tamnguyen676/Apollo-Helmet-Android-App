@@ -107,18 +107,13 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-//
-//        status = findViewById(R.id.status); // TextView used to display status messages to user
-//        progressBar = findViewById(R.id.progress);
-//        dest = findViewById(R.id.dest);
-//        btnAdd          = findViewById(R.id.add_contact_button);
-//        btnViewData     = findViewById(R.id.contact_list_button);
 
         container = findViewById(R.id.container);
         mapContainer = findViewById(R.id.mapcontainer);
         floatingSearchView = findViewById(R.id.floatingSearchView);
 
         mDatabaseHelper = new DatabaseHelper(this);
+//        mDatabaseHelper.delete();
 
         emergencyFragment = new EmergencyFragment();
         emergencyFragment.setDatabaseHelper(mDatabaseHelper);
@@ -241,21 +236,6 @@ public class MainActivity extends AppCompatActivity
     private void toastMessage(String message){
         Toast.makeText(this,message, Toast.LENGTH_SHORT).show();
     }
-
-    /**
-     * Launches the default contact manager application and allows user to pick a contact
-     * @param v
-     */
-    public void addContact() {
-        Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
-        startActivityForResult(intent, PICK_CONTACT);
-    }
-
-    public void viewContacts() {
-        Intent intent = new Intent(MainActivity.this, ListContactActivity.class);
-        startActivity(intent);
-    }
-
 
 
     protected void onResume() {
