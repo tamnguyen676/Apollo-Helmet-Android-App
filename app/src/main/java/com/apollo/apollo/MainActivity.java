@@ -185,6 +185,10 @@ public class MainActivity extends AppCompatActivity
                 if (!connectedThreadHolder.isConnected()) {
                     toastMessage("Could not find Apollo Helmet");
                     helmetSearchAlert.setVisibility(View.GONE);
+
+                    if (helmetFragment != null && helmetFragment.hasInflated()) {
+                        helmetFragment.handleDisconnect();
+                    }
                 }
             }
         }
