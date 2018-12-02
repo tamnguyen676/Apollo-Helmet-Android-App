@@ -29,6 +29,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -57,7 +58,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-// Test comment 2
+
 public class MainActivity extends AppCompatActivity
         implements BottomNavigationView.OnNavigationItemSelectedListener, DistanceCalculator {
 
@@ -69,10 +70,6 @@ public class MainActivity extends AppCompatActivity
 
     protected final static String TAG = "MainActivity";
 
-    private FusedLocationProviderClient mFusedLocationClient;
-    private LocationRequest mLocationRequest;
-    private LocationCallback mLocationCallback;
-    private boolean mRequestingLocationUpdates = false;
 
     private ConnectedThreadHolder connectedThreadHolder = new ConnectedThreadHolder();
     private ConnectThread connectThread;
@@ -94,6 +91,7 @@ public class MainActivity extends AppCompatActivity
     private MapFragmentView m_mapFragmentView;
     private BottomNavigationView bottomNavigationView;
     private FloatingSearchView floatingSearchView;
+    private LinearLayout helmetSearchAlert;
     private View container;
     private View mapContainer;
 
@@ -113,6 +111,7 @@ public class MainActivity extends AppCompatActivity
         container = findViewById(R.id.container);
         mapContainer = findViewById(R.id.mapcontainer);
         floatingSearchView = findViewById(R.id.floatingSearchView);
+        helmetSearchAlert = findViewById(R.id.helmetSearch);
 
         mDatabaseHelper = new DatabaseHelper(this);
 //        mDatabaseHelper.delete();
@@ -177,6 +176,8 @@ public class MainActivity extends AppCompatActivity
                         Log.d(TAG, found);
 //                        status.setText(found);
                         connectSocket(mBtDevice);
+                        toastMessage("Connected to Apollo helmet");
+                        helmetSearchAlert.setVisibility(View.GONE);
                     }
 
                     Log.d(TAG, "Added " + deviceName);
@@ -251,13 +252,7 @@ public class MainActivity extends AppCompatActivity
      * is handled by the BroadcastReceiver mReceiver defined above.
      */
     public void scanDevices() {
-
-//        // Location permissions is required to scan bluetooth
-//        checkLocationPermission();
-//
-//        // get SMS permission
-//        checkSMSPermission();
-//        checkReadPhoneStatePermission();
+        helmetSearchAlert.setVisibility(View.VISIBLE);
 
         Log.d(TAG, "Scanning...");
 
@@ -386,17 +381,6 @@ public class MainActivity extends AppCompatActivity
             default:
                 super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
-    }
-
-    /**
-     * Begin requesting for location updates. Every location update is handled in sendLocation
-     * method, specifically in the LocationCallback.
-     */
-    private void startLocationUpdates() {
-        checkLocationPermission();
-        mFusedLocationClient.requestLocationUpdates(mLocationRequest,
-                mLocationCallback,
-                null);
     }
 
     private void handleBluetoothNotFound() {
@@ -548,21 +532,9 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    protected void createLocationRequest() {
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(10000);
-        mLocationRequest.setFastestInterval(5000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-    }
-
     @Override
     public void onBackPressed() {
         moveTaskToBack(true);
-    }
-
-
-    public Context getContext() {
-        return this;
     }
 }
 

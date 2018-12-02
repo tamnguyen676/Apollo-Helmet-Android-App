@@ -40,7 +40,7 @@
             app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="parent"
-            app:layout_constraintVertical_bias="0.598" />
+            app:layout_constraintVertical_bias="0.598"/>
 
         <com.arlib.floatingsearchview.FloatingSearchView
             android:id="@+id/floatingSearchView"
@@ -62,6 +62,38 @@
             app:layout_constraintVertical_bias="1.0" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    <LinearLayout
+        android:id="@+id/helmetSearch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/scan_border"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_navigation_view"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/mapcontainer"
+        app:layout_constraintVertical_bias="1.0">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="252dp"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:text="Searching for helmet..." />
+
+        <ProgressBar
+            android:layout_width="34dp"
+            android:layout_height="match_parent" />
+
+    </LinearLayout>
 
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
