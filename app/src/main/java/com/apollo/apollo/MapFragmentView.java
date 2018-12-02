@@ -22,6 +22,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -290,8 +291,14 @@ public class MapFragmentView implements DistanceCalculator {
          * by calling either simulate() or startTracking()
          */
 
+        androidx.appcompat.app.AlertDialog.Builder alertDialogBuilder;
         /* Choose navigation modes between real time navigation and simulation */
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(m_activity);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            alertDialogBuilder = new androidx.appcompat.app.AlertDialog.Builder(m_activity, android.R.style.Theme_Material_Dialog_Alert);
+        } else {
+            alertDialogBuilder = new androidx.appcompat.app.AlertDialog.Builder(m_activity);
+        }
+
         alertDialogBuilder.setTitle("Navigation");
         alertDialogBuilder.setMessage("Choose Mode");
         alertDialogBuilder.setNegativeButton("Navigation",new DialogInterface.OnClickListener() {
@@ -310,7 +317,9 @@ public class MapFragmentView implements DistanceCalculator {
             };
         });
 
-        AlertDialog alertDialog = alertDialogBuilder.create();
+        floatingSearchView.setVisibility(View.GONE);
+
+        androidx.appcompat.app.AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
 
 
@@ -543,7 +552,6 @@ public class MapFragmentView implements DistanceCalculator {
      */
     public void startNavigation(GeoCoordinate coordinate) {
         createRoute(coordinate);
-        floatingSearchView.setVisibility(View.GONE);
     }
 
     public void onDestroy() {
