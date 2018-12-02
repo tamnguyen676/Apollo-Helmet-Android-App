@@ -1,6 +1,6 @@
 package com.apollo.apollo;
 
-public class ConnectedThreadHolder {
+public final class ConnectedThreadHolder {
     private ConnectedThread connectedThread;
 
     public ConnectedThread getConnectedThread() {

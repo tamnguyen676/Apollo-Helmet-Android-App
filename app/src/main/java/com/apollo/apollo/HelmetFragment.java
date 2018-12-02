@@ -4,15 +4,12 @@ package com.apollo.apollo;
 import android.bluetooth.BluetoothAdapter;
 import android.os.Bundle;
 import android.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 
 /**
@@ -24,6 +21,7 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
     private Button connectionButton;
     private Switch rearviewSwitch, blindspotSwitch, navigationSwitch, crashSwitch;
     private boolean hasInflated = false;
+    private BluetoothConnectionStatus btConnectionStatus;
 
     public HelmetFragment() {
         // Required empty public constructor
@@ -42,6 +40,8 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
         navigationSwitch = view.findViewById(R.id.navigationSwitch);
         crashSwitch = view.findViewById(R.id.crashSwitch);
         // Inflate the layout for this fragment
+        
+        handleSatus();
 
         hasInflated = true;
         return view;
@@ -63,6 +63,22 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
         connectionButton.setEnabled(true);
         connectionStatus.setText("Apollo Helmet Connected");
         connectionButton.setText("DISCONNECT");
+    }
+
+    public void setBtConnectionStatus(BluetoothConnectionStatus btConnectionStatus) {
+        this.btConnectionStatus = btConnectionStatus;
+    }
+
+    private void handleSatus() {
+        if (btConnectionStatus.getBluetoothAdapter() != null
+                && btConnectionStatus.getBluetoothAdapter().isDiscovering()) {
+            handleScan();
+        } else if (btConnectionStatus.getConnectedThreadHolder() != null
+                && btConnectionStatus.getConnectedThreadHolder().isConnected()) {
+            handleConnect();
+        } else if (btConnectionStatus.getConnectedThreadHolder() != null) {
+            handleDisconnect();
+        }
     }
 
     public boolean hasInflated() {

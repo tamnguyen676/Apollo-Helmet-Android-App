@@ -20,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -88,6 +89,8 @@ public class MainActivity extends AppCompatActivity
     private EmergencyFragment emergencyFragment;
     private HelmetFragment helmetFragment;
 
+    private BluetoothConnectionStatus btConnectionStatus = new BluetoothConnectionStatus();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -113,13 +116,19 @@ public class MainActivity extends AppCompatActivity
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
 
+        btConnectionStatus.setBluetoothAdapter(mBtAdapter);
+        btConnectionStatus.setConnectedThreadHolder(connectedThreadHolder);
+
         emergencyFragment = new EmergencyFragment();
         emergencyFragment.setDatabaseHelper(mDatabaseHelper);
 
         helmetFragment = new HelmetFragment();
+        helmetFragment.setBtConnectionStatus(btConnectionStatus);
 
         // Register for broadcasts when a device is discovered.
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BluetoothDevice.ACTION_FOUND);
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         registerReceiver(mReceiver, filter);
 
         bottomNavigationView = findViewById(R.id.bottom_navigation_view);
@@ -171,6 +180,10 @@ public class MainActivity extends AppCompatActivity
                     Log.d(TAG, "Added " + deviceName);
                 }
                 // String deviceHardwareAddress = device.getAddress(); // MAC address
+            }
+            else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
+                toastMessage("Could not find Apollo Helmet");
+                helmetSearchAlert.setVisibility(View.GONE);
             }
         }
     };
@@ -225,7 +238,9 @@ public class MainActivity extends AppCompatActivity
      * @param message
      */
     private void toastMessage(String message){
-        Toast.makeText(this,message, Toast.LENGTH_SHORT).show();
+        Toast toast = Toast.makeText(this,message, Toast.LENGTH_SHORT);
+        toast.setGravity(Gravity.BOTTOM, 0, 200);
+        toast.show();
     }
 
 
@@ -243,6 +258,10 @@ public class MainActivity extends AppCompatActivity
         helmetSearchAlert.setVisibility(View.VISIBLE);
 
         Log.d(TAG, "Scanning...");
+
+        if (helmetFragment != null && helmetFragment.hasInflated()) {
+            helmetFragment.handleScan();
+        }
 
         // If already discovering, cancel it so that a new scan can be performed.
         if (mBtAdapter.isDiscovering()) {
@@ -367,6 +386,7 @@ public class MainActivity extends AppCompatActivity
                 return true;
             case R.id.navigation_helmet:
                 getSupportFragmentManager().beginTransaction().replace(R.id.container, helmetFragment).commit();
+
                 container.setVisibility(View.VISIBLE);
                 mapContainer.setVisibility(View.GONE);
                 return true;
@@ -491,8 +511,7 @@ public class MainActivity extends AppCompatActivity
             helmetFragment.handleDisconnect();
         }
         else {
-            scanDevices();
-            helmetFragment.handleScan();
+            scanDevices(); // HandleConnect is called when device is found (in BroadcastReceiver)
         }
     }
 
