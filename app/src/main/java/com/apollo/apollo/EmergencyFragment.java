@@ -96,13 +96,13 @@ public class EmergencyFragment extends androidx.fragment.app.ListFragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        Log.d(TAG, "inOnActivityCreated");
 
         if (contactsList.isEmpty()) noContactsText.setVisibility(View.VISIBLE);
         else noContactsText.setVisibility(View.GONE);
 
         adapter = new ArrayAdapter<CharSequence>(getContext(),
                 R.layout.contact_row, contactsList);
-
 
         setListAdapter(adapter);
     }
@@ -175,6 +175,8 @@ public class EmergencyFragment extends androidx.fragment.app.ListFragment {
 
                         databaseHelper.deleteName(itemID);
                         contactsList.remove(name + "\n" + itemPhone);
+
+                        if (contactsList.isEmpty()) noContactsText.setVisibility(View.VISIBLE);
 
                         adapter = new ArrayAdapter<>(getContext(),
                                 R.layout.contact_row, contactsList);
