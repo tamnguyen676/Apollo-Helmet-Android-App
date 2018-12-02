@@ -9,14 +9,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Color;
-import android.location.Location;
 import android.net.Uri;
 import android.os.Handler;
 import android.provider.ContactsContract;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,7 +21,6 @@ import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.SearchEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -37,16 +33,7 @@ import android.widget.Toast;
 import com.arlib.floatingsearchview.FloatingSearchView;
 import com.arlib.floatingsearchview.suggestions.SearchSuggestionsAdapter;
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.material.bottomnavigation.BottomNavigationItemView;
-import com.google.android.material.bottomnavigation.BottomNavigationMenuView;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.here.android.mpa.common.GeoCoordinate;
-import com.here.android.mpa.mapping.Map;
 import com.here.android.mpa.search.DiscoveryResult;
 import com.here.android.mpa.search.DiscoveryResultPage;
 import com.here.android.mpa.search.ErrorCode;
@@ -55,7 +42,6 @@ import com.here.android.mpa.search.ResultListener;
 import com.here.android.mpa.search.SearchRequest;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 
@@ -72,7 +58,7 @@ public class MainActivity extends AppCompatActivity
 
 
     private ConnectedThreadHolder connectedThreadHolder = new ConnectedThreadHolder();
-    private ConnectThread connectThread;
+    private ConnectedThread connectedThread;
 
     BluetoothAdapter mBtAdapter;
     BluetoothDevice mBtDevice;
@@ -276,8 +262,8 @@ public class MainActivity extends AppCompatActivity
         Log.d("Socket", "In the connectSocket method");
         mBtAdapter.cancelDiscovery();
 
-        connectThread = new ConnectThread(mBtDevice, mDatabaseHelper, connectedThreadHolder);
-        Thread thread = new Thread(connectThread);
+        connectedThread = new ConnectedThread(mBtDevice, mDatabaseHelper, connectedThreadHolder);
+        Thread thread = new Thread(connectedThread);
         thread.start();
     }
 
