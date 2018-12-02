@@ -1,5 +1,6 @@
 package com.apollo.apollo;
 
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,11 +16,14 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.UUID;
 
 public class ConnectedThread extends MainActivity implements Runnable {
-    private final BluetoothSocket mmSocket;
-    private final InputStream mmInStream;
-    private final OutputStream mmOutStream;
+    private final BluetoothSocket socket;
+    private InputStream mmInStream;
+    private OutputStream mmOutStream;
+    private final BluetoothDevice mmDevice;
+    private ConnectedThreadHolder connectedThreadHolder;
     private byte[] mmBuffer; // mmBuffer store for the stream
     
     // declare a database instance to use the database
@@ -28,12 +32,45 @@ public class ConnectedThread extends MainActivity implements Runnable {
     // create a sms instance
     SmsManager smsManager = SmsManager.getDefault();
     
-    public ConnectedThread(BluetoothSocket socket, DatabaseHelper mDatabaseHelper) {
-        mmSocket = socket;
-        InputStream tmpIn = null;
-        OutputStream tmpOut = null;
+    public ConnectedThread(BluetoothDevice device,
+                           DatabaseHelper mDatabaseHelper,
+                           ConnectedThreadHolder connectedThreadHolder) {
+
+        BluetoothSocket tmp = null;
+        mmDevice = device;
 
         this.mDatabaseHelper = mDatabaseHelper;
+        this.connectedThreadHolder = connectedThreadHolder;
+
+        try {
+            // Get a BluetoothSocket to connect with the given BluetoothDevice.
+            // MY_UUID is the app's UUID string, also used in the server code.
+            UUID uuid = UUID.fromString("0fee0450-e95f-11e5-a837-0800200c9a66");
+            tmp = device.createRfcommSocketToServiceRecord(uuid);
+        } catch (IOException e) {
+            Log.e(TAG, "Socket's create() method failed", e);
+        }
+
+        socket = tmp;
+
+        try {
+            // Connect to the remote device through the socket. This call blocks
+            // until it succeeds or throws an exception.
+            socket.connect();
+        } catch (IOException connectException) {
+            // Unable to connect; close the socket and return.
+            try {
+                socket.close();
+            } catch (IOException closeException) {
+                Log.e(TAG, "Could not close the client socket", closeException);
+            }
+            return;
+        }
+
+        connectedThreadHolder.setConnectedThread(this);
+
+        InputStream tmpIn = null;
+        OutputStream tmpOut = null;
 
         // Get the input and output streams; using temp objects because
         // member streams are final.
@@ -50,6 +87,10 @@ public class ConnectedThread extends MainActivity implements Runnable {
 
         mmInStream = tmpIn;
         mmOutStream = tmpOut;
+
+        write("Connected!");
+
+        Log.d(TAG, "Connected!");
     }
 
     public void run() {
@@ -62,7 +103,14 @@ public class ConnectedThread extends MainActivity implements Runnable {
         while (true) {
             try {
                 // Read from the InputStream.
-                numBytes = mmInStream.read(mmBuffer);
+                try {
+                    numBytes = mmInStream.read(mmBuffer);
+                }
+                catch (NullPointerException e) {
+                    Log.w(TAG, "mmInStream is null");
+                    break;
+                }
+
                 String msg = new String(mmBuffer, "UTF-8").substring(0,numBytes);
 
                 Log.d("ConnectedThread", msg);
@@ -75,12 +123,11 @@ public class ConnectedThread extends MainActivity implements Runnable {
                         Log.d(TAG, "Message sent to :" + data.getString(0) ); //data.getString(0) // this is the number
                     }
                 }
-                
-
             } catch (IOException e) {
                 Log.d(TAG, "Input stream was disconnected", e);
                 break;
             }
+
         }
     }
 
@@ -106,7 +153,7 @@ public class ConnectedThread extends MainActivity implements Runnable {
     // Call this method from the main activity to shut down the connection.
     public void cancel() {
         try {
-            mmSocket.close();
+            socket.close();
 
         } catch (IOException e) {
             Log.e(TAG, "Could not close the connect socket", e);
