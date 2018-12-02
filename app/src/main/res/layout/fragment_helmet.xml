@@ -31,15 +31,21 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:paddingTop="42dp"
-                    android:text="@string/apollo_helmet_connected"/>
+                    android:text="@string/apollo_helmet_connected" />
 
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/connectionButton"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:onClick="handleHelmetButton"
-                    android:text="@string/disconnect"/>
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/connectionButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:onClick="handleHelmetButton"
+                        android:text="@string/disconnect" />
+                </LinearLayout>
 
             </LinearLayout>
         </LinearLayout>
@@ -47,7 +53,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="2dp"
-            android:background="#F2F2F2"/>
+            android:background="#F2F2F2" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -62,9 +68,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentStart="true"
+                    android:layout_alignParentLeft="true"
                     android:layout_centerVertical="true"
-                    android:text="@string/rearview_feed"
-                    android:layout_alignParentLeft="true" />
+                    android:text="@string/rearview_feed" />
 
                 <Switch
                     android:id="@+id/rearviewSwitch"
@@ -83,7 +89,8 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="2dp"
-            android:background="#F2F2F2"/>
+            android:background="#F2F2F2" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -97,9 +104,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentStart="true"
+                    android:layout_alignParentLeft="true"
                     android:layout_centerVertical="true"
-                    android:text="@string/navigation_feed"
-                    android:layout_alignParentLeft="true" />
+                    android:text="@string/navigation_feed" />
 
                 <Switch
                     android:id="@+id/navigationSwitch"
@@ -118,7 +125,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="2dp"
-            android:background="#F2F2F2"/>
+            android:background="#F2F2F2" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -133,9 +140,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentStart="true"
+                    android:layout_alignParentLeft="true"
                     android:layout_centerVertical="true"
-                    android:text="@string/blindspot_detectors"
-                    android:layout_alignParentLeft="true" />
+                    android:text="@string/blindspot_detectors" />
 
                 <Switch
                     android:id="@+id/blindspotSwitch"
@@ -154,7 +161,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="2dp"
-            android:background="#F2F2F2"/>
+            android:background="#F2F2F2" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -169,9 +176,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentStart="true"
+                    android:layout_alignParentLeft="true"
                     android:layout_centerVertical="true"
-                    android:text="@string/crash_sensors"
-                    android:layout_alignParentLeft="true" />
+                    android:text="@string/crash_sensors" />
 
                 <Switch
                     android:id="@+id/crashSwitch"
@@ -190,7 +197,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="2dp"
-            android:background="#F2F2F2"/>
+            android:background="#F2F2F2" />
 
     </LinearLayout>
 
