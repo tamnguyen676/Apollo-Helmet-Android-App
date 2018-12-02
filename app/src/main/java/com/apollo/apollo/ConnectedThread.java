@@ -23,7 +23,6 @@ public class ConnectedThread extends MainActivity implements Runnable {
     private InputStream mmInStream;
     private OutputStream mmOutStream;
     private final BluetoothDevice mmDevice;
-    private ConnectedThreadHolder connectedThreadHolder;
     private byte[] mmBuffer; // mmBuffer store for the stream
     
     // declare a database instance to use the database
@@ -32,15 +31,12 @@ public class ConnectedThread extends MainActivity implements Runnable {
     // create a sms instance
     SmsManager smsManager = SmsManager.getDefault();
     
-    public ConnectedThread(BluetoothDevice device,
-                           DatabaseHelper mDatabaseHelper,
-                           ConnectedThreadHolder connectedThreadHolder) {
+    public ConnectedThread(BluetoothDevice device, DatabaseHelper mDatabaseHelper) {
 
         BluetoothSocket tmp = null;
         mmDevice = device;
 
         this.mDatabaseHelper = mDatabaseHelper;
-        this.connectedThreadHolder = connectedThreadHolder;
 
         try {
             // Get a BluetoothSocket to connect with the given BluetoothDevice.
@@ -52,7 +48,9 @@ public class ConnectedThread extends MainActivity implements Runnable {
         }
 
         socket = tmp;
+    }
 
+    public void run() {
         try {
             // Connect to the remote device through the socket. This call blocks
             // until it succeeds or throws an exception.
@@ -66,8 +64,6 @@ public class ConnectedThread extends MainActivity implements Runnable {
             }
             return;
         }
-
-        connectedThreadHolder.setConnectedThread(this);
 
         InputStream tmpIn = null;
         OutputStream tmpOut = null;
@@ -91,11 +87,9 @@ public class ConnectedThread extends MainActivity implements Runnable {
         write("Connected!");
 
         Log.d(TAG, "Connected!");
-    }
 
-    public void run() {
         mmBuffer = new byte[1024];
-        int numBytes; // bytes returned from read()
+        int numBytes = 0; // bytes returned from read()
         
 //        mDatabaseHelper = new DatabaseHelper(this);
 //
@@ -108,7 +102,6 @@ public class ConnectedThread extends MainActivity implements Runnable {
                 }
                 catch (NullPointerException e) {
                     Log.w(TAG, "mmInStream is null");
-                    break;
                 }
 
                 String msg = new String(mmBuffer, "UTF-8").substring(0,numBytes);
@@ -158,5 +151,9 @@ public class ConnectedThread extends MainActivity implements Runnable {
         } catch (IOException e) {
             Log.e(TAG, "Could not close the connect socket", e);
         }
+    }
+
+    public boolean isConnected() {
+        return socket != null;
     }
 }

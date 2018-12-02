@@ -58,7 +58,6 @@ public class MainActivity extends AppCompatActivity
 
 
     private ConnectedThreadHolder connectedThreadHolder = new ConnectedThreadHolder();
-    private ConnectedThread connectedThread;
 
     BluetoothAdapter mBtAdapter;
     BluetoothDevice mBtDevice;
@@ -100,13 +99,6 @@ public class MainActivity extends AppCompatActivity
         helmetSearchAlert = findViewById(R.id.helmetSearch);
 
         mDatabaseHelper = new DatabaseHelper(this);
-//        mDatabaseHelper.delete();
-
-        emergencyFragment = new EmergencyFragment();
-        emergencyFragment.setDatabaseHelper(mDatabaseHelper);
-
-        helmetFragment = new HelmetFragment();
-
 
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -120,6 +112,11 @@ public class MainActivity extends AppCompatActivity
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
+
+        emergencyFragment = new EmergencyFragment();
+        emergencyFragment.setDatabaseHelper(mDatabaseHelper);
+
+        helmetFragment = new HelmetFragment();
 
         // Register for broadcasts when a device is discovered.
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
@@ -162,6 +159,11 @@ public class MainActivity extends AppCompatActivity
                         Log.d(TAG, found);
 //                        status.setText(found);
                         connectSocket(mBtDevice);
+
+                        if (helmetFragment != null && helmetFragment.hasInflated()) {
+                            helmetFragment.handleConnect();
+                        }
+
                         toastMessage("Connected to Apollo helmet");
                         helmetSearchAlert.setVisibility(View.GONE);
                     }
@@ -250,6 +252,7 @@ public class MainActivity extends AppCompatActivity
 
         // startDiscovery returns true if the scan starts successfully
         if (mBtAdapter.startDiscovery()) {
+            Log.d(TAG, "Scanning...");
 //            status.setText("Scanning");
         }
     }
@@ -262,50 +265,12 @@ public class MainActivity extends AppCompatActivity
         Log.d("Socket", "In the connectSocket method");
         mBtAdapter.cancelDiscovery();
 
-        connectedThread = new ConnectedThread(mBtDevice, mDatabaseHelper, connectedThreadHolder);
+        ConnectedThread connectedThread = new ConnectedThread(mBtDevice, mDatabaseHelper);
+        connectedThreadHolder.setConnectedThread(connectedThread);
         Thread thread = new Thread(connectedThread);
         thread.start();
     }
 
-
-    /**
-     * Checks to see if the user has given access to location permission. Needed for GPS and
-     * Bluetooth scan. If the user has not given access, request permission.
-     */
-    private void checkLocationPermission() {
-        if (ContextCompat.checkSelfPermission(getApplicationContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
-
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-
-        }
-    }
-    
-    private void checkSMSPermission() {
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.SEND_SMS)
-                != PackageManager.PERMISSION_GRANTED) {
-            int MY_PERMISSIONS_REQUEST_SEND_SMS = 1;  
-            ActivityCompat.requestPermissions(this,
-                  new String[]{Manifest.permission.SEND_SMS},
-                  MY_PERMISSIONS_REQUEST_SEND_SMS);
-        }
-    }
-
-    private void checkReadPhoneStatePermission() {
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.READ_PHONE_STATE)
-                != PackageManager.PERMISSION_GRANTED) {
-            int MY_PERMISSIONS_REQUEST_READ_PHONE_STATE = 1;
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_PHONE_STATE},
-                    MY_PERMISSIONS_REQUEST_READ_PHONE_STATE);
-        }
-    }
 
     /**
      * Only when the app's target SDK is 23 or higher, it requests each dangerous permissions it
@@ -515,6 +480,20 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onSearchAction(String currentQuery) {}
         });
+    }
+
+    public void handleHelmetButton(View v) {
+        if (mBtAdapter.isDiscovering()) {
+            helmetFragment.handleScan();
+        }
+        else if (connectedThreadHolder.isConnected()) {
+            connectedThreadHolder.endConnection();
+            helmetFragment.handleDisconnect();
+        }
+        else {
+            scanDevices();
+            helmetFragment.handleScan();
+        }
     }
 
 

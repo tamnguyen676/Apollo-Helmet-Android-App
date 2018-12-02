@@ -27,16 +27,18 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/helmetConnectionStatus"
+                    android:id="@+id/connectionStatus"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:paddingTop="42dp"
                     android:text="@string/apollo_helmet_connected"/>
 
+
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/connectionButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:onClick="handleHelmetButton"
                     android:text="@string/disconnect"/>
 
             </LinearLayout>
