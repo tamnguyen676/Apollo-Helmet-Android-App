@@ -69,7 +69,6 @@ import java.util.Locale;
 public class MapFragmentView implements DistanceCalculator {
     private MapFragment m_mapFragment;
     private Activity m_activity;
-    private Button m_naviControlButton;
     private Map m_map;
     private NavigationManager m_navigationManager;
     private GeoBoundingBox m_geoBoundingBox;
@@ -77,12 +76,10 @@ public class MapFragmentView implements DistanceCalculator {
     private boolean m_foregroundServiceStarted;
     private PositioningManager m_positioningManager;
     private GeoCoordinate m_geoCoordinate;
-    private EditText m_destination;
     private Maneuver maneuver;
     private double lastDistance;
     private FloatingSearchView floatingSearchView;
     private ConnectedThreadHolder connectedThreadHolder;
-    private int lastDistanceFeet = 0;
 
     private static String TAG = "MapFragmentView";
 
@@ -92,7 +89,6 @@ public class MapFragmentView implements DistanceCalculator {
         m_activity = activity;
         this.floatingSearchView = floatingSearchView;
         this.connectedThreadHolder = connectedThread;
-        m_destination = m_activity.findViewById(R.id.destination);
 
         initMapFragment();
     }
@@ -553,6 +549,11 @@ public class MapFragmentView implements DistanceCalculator {
      */
     public void startNavigation(GeoCoordinate coordinate) {
         createRoute(coordinate);
+    }
+
+    public GeoCoordinate getCurrentPos() {
+        updatePos();
+        return m_geoCoordinate;
     }
 
     public void onDestroy() {

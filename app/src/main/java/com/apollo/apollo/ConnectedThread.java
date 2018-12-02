@@ -13,6 +13,8 @@ import android.database.Cursor;
 import android.telephony.SmsManager;
 import android.widget.Toast;
 
+import com.here.android.mpa.common.GeoCoordinate;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -24,6 +26,7 @@ public class ConnectedThread extends MainActivity implements Runnable {
     private OutputStream mmOutStream;
     private final BluetoothDevice mmDevice;
     private byte[] mmBuffer; // mmBuffer store for the stream
+    private MapFragmentView mapFragmentView;
     
     // declare a database instance to use the database
     DatabaseHelper mDatabaseHelper;
@@ -31,12 +34,15 @@ public class ConnectedThread extends MainActivity implements Runnable {
     // create a sms instance
     SmsManager smsManager = SmsManager.getDefault();
     
-    public ConnectedThread(BluetoothDevice device, DatabaseHelper mDatabaseHelper) {
+    public ConnectedThread(BluetoothDevice device,
+                           DatabaseHelper mDatabaseHelper,
+                           MapFragmentView mapFragmentView) {
+
+        this.mapFragmentView = mapFragmentView;
+        this.mDatabaseHelper = mDatabaseHelper;
 
         BluetoothSocket tmp = null;
         mmDevice = device;
-
-        this.mDatabaseHelper = mDatabaseHelper;
 
         try {
             // Get a BluetoothSocket to connect with the given BluetoothDevice.
@@ -110,9 +116,18 @@ public class ConnectedThread extends MainActivity implements Runnable {
                 // Handle message
                 if ("Crash".equals(msg)){
                     Cursor data = mDatabaseHelper.getPhoneNumber();
-                    String message = "SEND HELP!!!!";
+
+                    StringBuilder sb = new StringBuilder();
+                    GeoCoordinate coordinate = mapFragmentView.getCoordinate();
+                    sb.append("EMERGENCY: I HAVE BEEN INVOLVED IN A MOTORCYCLE ACCIDENT. LATITUDE: ");
+                    sb.append(coordinate.getLatitude());
+                    sb.append(" LONGITUDE: ");
+                    sb.append(coordinate.getLongitude());
+                    sb.append(" THIS IS AN AUTOMATED MESSAGE");
+
+
                     while(data.moveToNext()){
-                        smsManager.sendTextMessage(data.getString(0), null, message, null, null);
+                        smsManager.sendTextMessage(data.getString(0), null, sb.toString(), null, null);
                         Log.d(TAG, "Message sent to :" + data.getString(0) ); //data.getString(0) // this is the number
                     }
                 }

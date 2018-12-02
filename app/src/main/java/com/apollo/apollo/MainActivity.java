@@ -286,7 +286,7 @@ public class MainActivity extends AppCompatActivity
         Log.d("Socket", "In the connectSocket method");
         mBtAdapter.cancelDiscovery();
 
-        ConnectedThread connectedThread = new ConnectedThread(mBtDevice, mDatabaseHelper);
+        ConnectedThread connectedThread = new ConnectedThread(mBtDevice, mDatabaseHelper, m_mapFragmentView);
         connectedThreadHolder.setConnectedThread(connectedThread);
         Thread thread = new Thread(connectedThread);
         thread.start();
