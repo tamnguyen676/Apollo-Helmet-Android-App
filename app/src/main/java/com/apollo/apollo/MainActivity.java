@@ -360,15 +360,15 @@ public class MainActivity extends AppCompatActivity
                 mapContainer.setVisibility(View.VISIBLE);
                 return true;
             case R.id.navigation_contacts:
-                container.setVisibility(View.VISIBLE);
-                mapContainer.setVisibility(View.GONE);
                 emergencyFragment.setList(mDatabaseHelper.getData());
                 getSupportFragmentManager().beginTransaction().replace(R.id.container, emergencyFragment).commit();
-                return true;
-            case R.id.navigation_helmet:
                 container.setVisibility(View.VISIBLE);
                 mapContainer.setVisibility(View.GONE);
+                return true;
+            case R.id.navigation_helmet:
                 getSupportFragmentManager().beginTransaction().replace(R.id.container, helmetFragment).commit();
+                container.setVisibility(View.VISIBLE);
+                mapContainer.setVisibility(View.GONE);
                 return true;
         }
 
