@@ -50,6 +50,7 @@ import com.here.android.mpa.routing.RouteResult;
 import com.here.android.mpa.routing.RouteWaypoint;
 import com.here.android.mpa.routing.Router;
 import com.here.android.mpa.routing.RoutingError;
+import com.here.android.mpa.urbanmobility.Alert;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -261,6 +262,7 @@ public class MapFragmentView implements DistanceCalculator {
      * See https://developer.android.com/guide/components/services.html#Foreground
      */
     private void startForegroundService() {
+        floatingSearchView.setVisibility(View.GONE);
         if (!m_foregroundServiceStarted) {
             m_foregroundServiceStarted = true;
             Intent startIntent = new Intent(m_activity, ForegroundService.class);
@@ -294,7 +296,7 @@ public class MapFragmentView implements DistanceCalculator {
         androidx.appcompat.app.AlertDialog.Builder alertDialogBuilder;
         /* Choose navigation modes between real time navigation and simulation */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            alertDialogBuilder = new androidx.appcompat.app.AlertDialog.Builder(m_activity, android.R.style.Theme_Material_Dialog_Alert);
+            alertDialogBuilder = new androidx.appcompat.app.AlertDialog.Builder(m_activity, AlertDialog.THEME_TRADITIONAL);
         } else {
             alertDialogBuilder = new androidx.appcompat.app.AlertDialog.Builder(m_activity);
         }
@@ -317,7 +319,6 @@ public class MapFragmentView implements DistanceCalculator {
             };
         });
 
-        floatingSearchView.setVisibility(View.GONE);
 
         androidx.appcompat.app.AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();

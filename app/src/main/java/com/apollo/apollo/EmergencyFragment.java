@@ -155,7 +155,7 @@ public class EmergencyFragment extends androidx.fragment.app.ListFragment {
 
         AlertDialog.Builder builder;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            builder = new AlertDialog.Builder(getContext(), android.R.style.Theme_Material_Dialog_Alert);
+            builder = new AlertDialog.Builder(getContext(), android.app.AlertDialog.THEME_TRADITIONAL);
         } else {
             builder = new AlertDialog.Builder(getContext());
         }
