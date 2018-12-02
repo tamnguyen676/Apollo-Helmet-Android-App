@@ -37,9 +37,6 @@
             android:theme="@style/AppTheme">
         </activity>
 
-        <activity android:name=".EditDataActivity"
-                  android:label="@string/editData_title"/>
-
         <meta-data android:name="com.here.android.maps.appid" android:value="WRtx0M8EE0EZLhWDz8lz"/>
         <meta-data android:name="com.here.android.maps.apptoken" android:value="0NMTdlM5PbWW6B2uvvl_qw"/>
         <meta-data
