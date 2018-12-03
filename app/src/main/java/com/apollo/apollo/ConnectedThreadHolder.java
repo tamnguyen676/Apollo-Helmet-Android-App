@@ -12,7 +12,7 @@ public final class ConnectedThreadHolder {
     }
 
     public boolean isConnected() {
-        return connectedThread != null;
+        return connectedThread != null && connectedThread.isConnected();
     }
 
     public void endConnection() {

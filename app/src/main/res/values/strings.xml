@@ -17,7 +17,7 @@
     <string name="helmet">Helmet</string>
     <string name="noEmergencyContacts">You have no emergency contacts</string>
     <string name="emergency_contacts">Emergency Contacts</string>
-    <string name="disconnect">disconnect</string>
+    <string name="disconnect">DISCONNECT</string>
     <string name="apollo_helmet_connected">Apollo Helmet Connected</string>
     <string name="crash_sensors">Crash Sensors</string>
     <string name="blindspot_detectors">Blindspot Detectors</string>

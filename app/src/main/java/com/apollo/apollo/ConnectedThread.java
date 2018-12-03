@@ -15,6 +15,9 @@ import android.widget.Toast;
 
 import com.here.android.mpa.common.GeoCoordinate;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,6 +30,7 @@ public class ConnectedThread extends MainActivity implements Runnable {
     private final BluetoothDevice mmDevice;
     private byte[] mmBuffer; // mmBuffer store for the stream
     private MapFragmentView mapFragmentView;
+    private OptionSwitches optionSwitches;
     
     // declare a database instance to use the database
     DatabaseHelper mDatabaseHelper;
@@ -96,9 +100,22 @@ public class ConnectedThread extends MainActivity implements Runnable {
 
         mmBuffer = new byte[1024];
         int numBytes = 0; // bytes returned from read()
-        
-//        mDatabaseHelper = new DatabaseHelper(this);
-//
+
+
+        // Doesn't work currently since optionSwitches will always be null
+        if (optionSwitches != null) {
+            write(getOptionMessage("crashSensor", optionSwitches.getCrashSwitch().isChecked()));
+            write(getOptionMessage("blindspotSensor", optionSwitches.getBlindspotSwitch().isChecked()));
+            write(getOptionMessage("rearviewFeed", optionSwitches.getRearviewSwitch().isChecked()));
+            write(getOptionMessage("navigationFeed", optionSwitches.getNavigationSwitch().isChecked()));
+
+            Log.d(TAG, getOptionMessage("crashSensor", optionSwitches.getCrashSwitch().isChecked()));
+            Log.d(TAG, getOptionMessage("blindspotSensor", optionSwitches.getBlindspotSwitch().isChecked()));
+            Log.d(TAG, getOptionMessage("rearviewFeed", optionSwitches.getRearviewSwitch().isChecked()));
+            Log.d(TAG, getOptionMessage("navigationFeed", optionSwitches.getNavigationSwitch().isChecked()));
+        }
+
+
         // Keep listening to the InputStream until an exception occurs.
         while (true) {
             try {
@@ -144,7 +161,7 @@ public class ConnectedThread extends MainActivity implements Runnable {
         try {
             mmOutStream.write(msg.getBytes());
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             Log.e(TAG, "Error occurred when sending data", e);
 
             // Send a failure message back to the activity.
@@ -168,7 +185,23 @@ public class ConnectedThread extends MainActivity implements Runnable {
         }
     }
 
+    public void setOptionSwitches(OptionSwitches optionSwitches) {
+        this.optionSwitches = optionSwitches;
+    }
+
+    private String getOptionMessage(String str, boolean on) {
+        JSONObject json = new JSONObject();
+
+        try {
+            json.put("optionMessage", new JSONObject().put(str, on));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return json.toString();
+    }
+
     public boolean isConnected() {
-        return socket != null;
+        return mmOutStream != null;
     }
 }

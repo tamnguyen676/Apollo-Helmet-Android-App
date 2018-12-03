@@ -15,7 +15,6 @@ import android.provider.ContactsContract;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.DialogFragment;
-import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
@@ -23,11 +22,8 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -63,16 +59,7 @@ public class MainActivity extends AppCompatActivity
     BluetoothAdapter mBtAdapter;
     BluetoothDevice mBtDevice;
 
-    TextView status;
-    ProgressBar progressBar;
-    EditText dest;
-    String origin;
-
     DatabaseHelper mDatabaseHelper;
-
-    Button btnViewData; // create a button variable to go to a second activity
-    Button btnAdd;
-    EditText contact_name,contact_number;
 
     private MapFragmentView m_mapFragmentView;
     private BottomNavigationView bottomNavigationView;
@@ -124,6 +111,7 @@ public class MainActivity extends AppCompatActivity
 
         helmetFragment = new HelmetFragment();
         helmetFragment.setBtConnectionStatus(btConnectionStatus);
+        helmetFragment.setConnectedThreadHolder(connectedThreadHolder);
 
         // Register for broadcasts when a device is discovered.
         IntentFilter filter = new IntentFilter();
@@ -182,7 +170,7 @@ public class MainActivity extends AppCompatActivity
                 // String deviceHardwareAddress = device.getAddress(); // MAC address
             }
             else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                if (!connectedThreadHolder.isConnected()) {
+                if (connectedThreadHolder.getConnectedThread() == null) {
                     toastMessage("Could not find Apollo Helmet");
                     helmetSearchAlert.setVisibility(View.GONE);
 
