@@ -35,6 +35,10 @@
 
         <activity android:name=".MainActivity"
             android:theme="@style/AppTheme">
+            <intent-filter> <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
+                <action android:name="android.bluetooth.device.action.ACL_DISCONNECT_REQUESTED" />
+                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+            </intent-filter>
         </activity>
 
         <meta-data android:name="com.here.android.maps.appid" android:value="WRtx0M8EE0EZLhWDz8lz"/>

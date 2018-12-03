@@ -5,12 +5,14 @@ import android.bluetooth.BluetoothAdapter;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -103,6 +105,10 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
 
         handleSatus();
 
+        if (connectedThreadHolder.getConnectedThread() != null) {
+            connectedThreadHolder.getConnectedThread().setHelmetFragment(this);
+        }
+
         hasInflated = true;
         return view;
     }
@@ -115,8 +121,8 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
         navigationSwitch.setEnabled(false);
         crashSwitch.setEnabled(false);
 
-        connectionStatus.setText("Apollo Helmet Disconnected");
-        connectionButton.setText("CONNECT");
+        connectionStatus.setText(R.string.helmet_disconnected);
+        connectionButton.setText(R.string.connect);
     }
 
     public void handleScan() {
@@ -127,8 +133,8 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
         navigationSwitch.setEnabled(false);
         crashSwitch.setEnabled(false);
 
-        connectionStatus.setText("Searching for Apollo Helmet");
-        connectionButton.setText("CONNECT");
+        connectionStatus.setText(R.string.searching_for_helmet);
+        connectionButton.setText(R.string.connect);
     }
 
     public void handleConnect() {
@@ -151,8 +157,8 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
             Log.d(TAG, "Bluetooth not connected");
         }
 
-        connectionStatus.setText("Apollo Helmet Connected");
-        connectionButton.setText("DISCONNECT");
+        connectionStatus.setText(R.string.helmet_connected);
+        connectionButton.setText(R.string.disconnect);
     }
 
 

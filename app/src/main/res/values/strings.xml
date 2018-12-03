@@ -23,4 +23,8 @@
     <string name="blindspot_detectors">Blindspot Detectors</string>
     <string name="navigation_feed">Navigation Feed</string>
     <string name="rearview_feed">Rearview Feed</string>
+    <string name="connect">CONNECT</string>
+    <string name="searching_for_helmet">Searching for Apollo Helmet</string>
+    <string name="helmet_disconnected">Apollo Helmet Disconnected</string>
+    <string name="helmet_connected">Apollo Helmet Connected</string>
 </resources>

@@ -1,7 +1,9 @@
 package com.apollo.apollo;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -11,6 +13,7 @@ import android.database.Cursor;
 
 //send sms
 import android.telephony.SmsManager;
+import android.view.Gravity;
 import android.widget.Toast;
 
 import com.here.android.mpa.common.GeoCoordinate;
@@ -24,6 +27,9 @@ import java.io.OutputStream;
 import java.util.UUID;
 
 public class ConnectedThread extends MainActivity implements Runnable {
+
+    private final static String TAG = "ConnectedThread";
+
     private final BluetoothSocket socket;
     private InputStream mmInStream;
     private OutputStream mmOutStream;
@@ -31,6 +37,8 @@ public class ConnectedThread extends MainActivity implements Runnable {
     private byte[] mmBuffer; // mmBuffer store for the stream
     private MapFragmentView mapFragmentView;
     private OptionSwitches optionSwitches;
+    private HelmetFragment helmetFragment;
+    private Activity m_activity;
     
     // declare a database instance to use the database
     DatabaseHelper mDatabaseHelper;
@@ -38,10 +46,12 @@ public class ConnectedThread extends MainActivity implements Runnable {
     // create a sms instance
     SmsManager smsManager = SmsManager.getDefault();
     
-    public ConnectedThread(BluetoothDevice device,
+    public ConnectedThread(Activity activity,
+                           BluetoothDevice device,
                            DatabaseHelper mDatabaseHelper,
                            MapFragmentView mapFragmentView) {
 
+        this.m_activity = activity;
         this.mapFragmentView = mapFragmentView;
         this.mDatabaseHelper = mDatabaseHelper;
 
@@ -61,6 +71,7 @@ public class ConnectedThread extends MainActivity implements Runnable {
     }
 
     public void run() {
+        Looper.prepare();
         try {
             // Connect to the remote device through the socket. This call blocks
             // until it succeeds or throws an exception.
@@ -125,6 +136,21 @@ public class ConnectedThread extends MainActivity implements Runnable {
                 }
                 catch (NullPointerException e) {
                     Log.w(TAG, "mmInStream is null");
+                }  catch (IOException e) {
+//                    Log.d(TAG, "Bluetooth socket was closed");
+                    mmOutStream = null;
+                    mmInStream = null;
+                    cancel();
+//
+//                    Toast toast = Toast.makeText(m_activity, "Bluetooth connection lost", Toast.LENGTH_LONG);
+//                    toast.setGravity(Gravity.BOTTOM, 0, 200);
+//                    toast.show();
+//
+//                    if (helmetFragment != null) {
+//                        helmetFragment.handleDisconnect();
+//                    }
+
+                    break;
                 }
 
                 String msg = new String(mmBuffer, "UTF-8").substring(0,numBytes);
@@ -199,6 +225,10 @@ public class ConnectedThread extends MainActivity implements Runnable {
         }
 
         return json.toString();
+    }
+
+    public void setHelmetFragment(HelmetFragment helmetFragment) {
+        this.helmetFragment = helmetFragment;
     }
 
     public boolean isConnected() {

@@ -117,6 +117,7 @@ public class MainActivity extends AppCompatActivity
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothDevice.ACTION_FOUND);
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         registerReceiver(mReceiver, filter);
 
         bottomNavigationView = findViewById(R.id.bottom_navigation_view);
@@ -179,6 +180,14 @@ public class MainActivity extends AppCompatActivity
                     }
                 }
             }
+            else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
+                Log.d(TAG, "Bluetooth connection was lost");
+                toastMessage("Bluetooth Connection Lost");
+
+                if (helmetFragment != null && helmetFragment.hasInflated()) {
+                    helmetFragment.handleDisconnect();
+                }
+            }
         }
     };
 
@@ -232,7 +241,7 @@ public class MainActivity extends AppCompatActivity
      * @param message
      */
     private void toastMessage(String message){
-        Toast toast = Toast.makeText(this,message, Toast.LENGTH_SHORT);
+        Toast toast = Toast.makeText(this,message, Toast.LENGTH_LONG);
         toast.setGravity(Gravity.BOTTOM, 0, 200);
         toast.show();
     }
@@ -278,7 +287,7 @@ public class MainActivity extends AppCompatActivity
         Log.d("Socket", "In the connectSocket method");
         mBtAdapter.cancelDiscovery();
 
-        ConnectedThread connectedThread = new ConnectedThread(mBtDevice, mDatabaseHelper, m_mapFragmentView);
+        ConnectedThread connectedThread = new ConnectedThread(this, mBtDevice, mDatabaseHelper, m_mapFragmentView);
         connectedThreadHolder.setConnectedThread(connectedThread);
         Thread thread = new Thread(connectedThread);
         thread.start();
