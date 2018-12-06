@@ -1,21 +1,21 @@
 package com.apollo.apollo;
 
 
-import android.bluetooth.BluetoothAdapter;
+import android.os.Build;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import androidx.appcompat.app.AlertDialog;
 
 
 /**
@@ -27,7 +27,7 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
 
     private TextView connectionStatus;
     private Button connectionButton;
-    private Switch rearviewSwitch, blindspotSwitch, navigationSwitch, crashSwitch;
+    private Switch hudSwitch, blindspotSwitch, crashSwitch;
     private boolean hasInflated = false;
     private BluetoothConnectionStatus btConnectionStatus;
     private ConnectedThreadHolder connectedThreadHolder;
@@ -45,22 +45,20 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
         connectionStatus = view.findViewById(R.id.connectionStatus);
         connectionButton = view.findViewById(R.id.connectionButton);
 
-        rearviewSwitch = view.findViewById(R.id.rearviewSwitch);
+        hudSwitch = view.findViewById(R.id.hudSwitch);
         blindspotSwitch = view.findViewById(R.id.blindspotSwitch);
-        navigationSwitch = view.findViewById(R.id.navigationSwitch);
         crashSwitch = view.findViewById(R.id.crashSwitch);
 
-        rearviewSwitch.setChecked(true);
+        hudSwitch.setChecked(true);
         blindspotSwitch.setChecked(true);
-        navigationSwitch.setChecked(true);
         crashSwitch.setChecked(true);
 
-        rearviewSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+        hudSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (connectedThreadHolder.isConnected()) {
                 connectedThreadHolder
                         .getConnectedThread()
-                        .write(getOptionMessage("rearviewFeed", isChecked));
-                Log.d(TAG, getOptionMessage("rearviewFeed", isChecked));
+                        .write(getOptionMessage("hud", isChecked));
+                Log.d(TAG, getOptionMessage("hud", isChecked));
             }
             else {
                 Log.d(TAG, "Bluetooth not connected");
@@ -79,31 +77,43 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
             }
         }));
 
-        navigationSwitch.setOnCheckedChangeListener(((buttonView, isChecked) -> {
-            if (connectedThreadHolder.isConnected()) {
-                connectedThreadHolder
-                        .getConnectedThread()
-                        .write(getOptionMessage("navigationFeed", isChecked));
-                Log.d(TAG, getOptionMessage("navigationFeed", isChecked));
-            }
-            else {
-                Log.d(TAG, "Bluetooth not connected");
-            }
-        }));
-
         crashSwitch.setOnCheckedChangeListener(((buttonView, isChecked) -> {
-            if (connectedThreadHolder.isConnected()) {
-                connectedThreadHolder
-                        .getConnectedThread()
-                        .write(getOptionMessage("crashSensor", isChecked));
-                Log.d(TAG, getOptionMessage("crashSensor", isChecked));
-            }
-            else {
-                Log.d(TAG, "Bluetooth not connected");
+
+            if (!isChecked) {
+                AlertDialog.Builder builder;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    builder = new AlertDialog.Builder(getActivity(), android.app.AlertDialog.THEME_TRADITIONAL);
+                } else {
+                    builder = new AlertDialog.Builder(getActivity());
+                }
+                builder.setTitle("Warning")
+                        .setMessage("In the event of an accident, emergency services and" +
+                                " contacts will not be notified. Are you sure" +
+                                " you want to turn this off?")
+                        .setNegativeButton(android.R.string.no, (dialog, which) -> {
+                            crashSwitch.setChecked(true);
+                        })
+                        .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                            if (connectedThreadHolder.isConnected()) {
+                                connectedThreadHolder
+                                        .getConnectedThread()
+                                        .write(getOptionMessage("crashSensor", isChecked));
+                                Log.d(TAG, getOptionMessage("crashSensor", isChecked));
+                            }
+                            else {
+                                Log.d(TAG, "Bluetooth not connected");
+                            }
+                        })
+                        .setIcon(android.R.drawable.ic_dialog_alert);
+
+                final AlertDialog alert = builder.create();
+                alert.setCanceledOnTouchOutside(false);
+                alert.setCancelable(false);
+                alert.show();
             }
         }));
 
-        handleSatus();
+        handleStatus();
 
         if (connectedThreadHolder.getConnectedThread() != null) {
             connectedThreadHolder.getConnectedThread().setHelmetFragment(this);
@@ -117,8 +127,7 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
         connectionButton.setEnabled(true);
 
         blindspotSwitch.setEnabled(false);
-        rearviewSwitch.setEnabled(false);
-        navigationSwitch.setEnabled(false);
+        hudSwitch.setEnabled(false);
         crashSwitch.setEnabled(false);
 
         connectionStatus.setText(R.string.helmet_disconnected);
@@ -129,8 +138,7 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
         connectionButton.setEnabled(false);
 
         blindspotSwitch.setEnabled(false);
-        rearviewSwitch.setEnabled(false);
-        navigationSwitch.setEnabled(false);
+        hudSwitch.setEnabled(false);
         crashSwitch.setEnabled(false);
 
         connectionStatus.setText(R.string.searching_for_helmet);
@@ -141,15 +149,13 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
         connectionButton.setEnabled(true);
 
         blindspotSwitch.setEnabled(true);
-        rearviewSwitch.setEnabled(true);
-        navigationSwitch.setEnabled(true);
+        hudSwitch.setEnabled(true);
         crashSwitch.setEnabled(true);
 
         if (connectedThreadHolder.getConnectedThread() != null) {
             ConnectedThread connectedThread = connectedThreadHolder.getConnectedThread();
 
-            connectedThread.setOptionSwitches(new OptionSwitches(rearviewSwitch,
-                    navigationSwitch,
+            connectedThread.setOptionSwitches(new OptionSwitches(hudSwitch,
                     blindspotSwitch,
                     crashSwitch));
         }
@@ -162,7 +168,7 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
     }
 
 
-    private void handleSatus() {
+    private void handleStatus() {
         if (btConnectionStatus.getBluetoothAdapter() != null
                 && btConnectionStatus.getBluetoothAdapter().isDiscovering()) {
             handleScan();
@@ -186,7 +192,7 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
         JSONObject json = new JSONObject();
 
         try {
-            json.put("optionMessage", new JSONObject().put(str, on));
+            json.put(str, on);
         } catch (JSONException e) {
             e.printStackTrace();
         }
