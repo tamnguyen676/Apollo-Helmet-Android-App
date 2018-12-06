@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.provider.ContactsContract;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -67,6 +68,7 @@ public class MainActivity extends AppCompatActivity
     private LinearLayout helmetSearchAlert;
     private View container;
     private View mapContainer;
+    private Vibrator vibrator;
 
     private List<DiscoveryResult> discoveryResultList;
     private ResultListener<DiscoveryResultPage> discoveryResultPageListener;
@@ -89,6 +91,8 @@ public class MainActivity extends AppCompatActivity
         helmetSearchAlert = findViewById(R.id.helmetSearch);
 
         mDatabaseHelper = new DatabaseHelper(this);
+
+        vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -287,7 +291,7 @@ public class MainActivity extends AppCompatActivity
         Log.d("Socket", "In the connectSocket method");
         mBtAdapter.cancelDiscovery();
 
-        ConnectedThread connectedThread = new ConnectedThread(this, mBtDevice, mDatabaseHelper, m_mapFragmentView);
+        ConnectedThread connectedThread = new ConnectedThread(this, mBtDevice, mDatabaseHelper, m_mapFragmentView, vibrator);
         connectedThreadHolder.setConnectedThread(connectedThread);
         Thread thread = new Thread(connectedThread);
         thread.start();

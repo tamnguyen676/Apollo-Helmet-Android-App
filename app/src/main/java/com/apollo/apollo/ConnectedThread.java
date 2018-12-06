@@ -4,17 +4,18 @@ import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.VibrationEffect;
 import android.util.Log;
 import android.database.Cursor;
 
 //send sms
 import android.telephony.SmsManager;
-import android.view.Gravity;
-import android.widget.Toast;
 
 import com.here.android.mpa.common.GeoCoordinate;
 
@@ -25,6 +26,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
+import android.os.Vibrator;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 
 public class ConnectedThread extends MainActivity implements Runnable {
 
@@ -39,6 +46,7 @@ public class ConnectedThread extends MainActivity implements Runnable {
     private OptionSwitches optionSwitches;
     private HelmetFragment helmetFragment;
     private Activity m_activity;
+    private Vibrator vibrator;
     
     // declare a database instance to use the database
     DatabaseHelper mDatabaseHelper;
@@ -49,11 +57,13 @@ public class ConnectedThread extends MainActivity implements Runnable {
     public ConnectedThread(Activity activity,
                            BluetoothDevice device,
                            DatabaseHelper mDatabaseHelper,
-                           MapFragmentView mapFragmentView) {
+                           MapFragmentView mapFragmentView,
+                           Vibrator vibrator) {
 
         this.m_activity = activity;
         this.mapFragmentView = mapFragmentView;
         this.mDatabaseHelper = mDatabaseHelper;
+        this.vibrator = vibrator;
 
         BluetoothSocket tmp = null;
         mmDevice = device;
@@ -117,13 +127,11 @@ public class ConnectedThread extends MainActivity implements Runnable {
         if (optionSwitches != null) {
             write(getOptionMessage("crashSensor", optionSwitches.getCrashSwitch().isChecked()));
             write(getOptionMessage("blindspotSensor", optionSwitches.getBlindspotSwitch().isChecked()));
-            write(getOptionMessage("rearviewFeed", optionSwitches.getRearviewSwitch().isChecked()));
-            write(getOptionMessage("navigationFeed", optionSwitches.getNavigationSwitch().isChecked()));
+            write(getOptionMessage("hud", optionSwitches.getHudSwitch().isChecked()));
 
             Log.d(TAG, getOptionMessage("crashSensor", optionSwitches.getCrashSwitch().isChecked()));
             Log.d(TAG, getOptionMessage("blindspotSensor", optionSwitches.getBlindspotSwitch().isChecked()));
-            Log.d(TAG, getOptionMessage("rearviewFeed", optionSwitches.getRearviewSwitch().isChecked()));
-            Log.d(TAG, getOptionMessage("navigationFeed", optionSwitches.getNavigationSwitch().isChecked()));
+            Log.d(TAG, getOptionMessage("hud", optionSwitches.getHudSwitch().isChecked()));
         }
 
 
@@ -141,14 +149,6 @@ public class ConnectedThread extends MainActivity implements Runnable {
                     mmOutStream = null;
                     mmInStream = null;
                     cancel();
-//
-//                    Toast toast = Toast.makeText(m_activity, "Bluetooth connection lost", Toast.LENGTH_LONG);
-//                    toast.setGravity(Gravity.BOTTOM, 0, 200);
-//                    toast.show();
-//
-//                    if (helmetFragment != null) {
-//                        helmetFragment.handleDisconnect();
-//                    }
 
                     break;
                 }
@@ -158,27 +158,74 @@ public class ConnectedThread extends MainActivity implements Runnable {
                 Log.d("ConnectedThread", msg);
                 // Handle message
                 if ("Crash".equals(msg)){
-                    Cursor data = mDatabaseHelper.getPhoneNumber();
-
-                    StringBuilder sb = new StringBuilder();
-                    GeoCoordinate coordinate = mapFragmentView.getCoordinate();
-                    sb.append("EMERGENCY: I HAVE BEEN INVOLVED IN A MOTORCYCLE ACCIDENT. LATITUDE: ");
-                    sb.append(coordinate.getLatitude());
-                    sb.append(" LONGITUDE: ");
-                    sb.append(coordinate.getLongitude());
-                    sb.append(" THIS IS AN AUTOMATED MESSAGE");
 
 
-                    while(data.moveToNext()){
-                        smsManager.sendTextMessage(data.getString(0), null, sb.toString(), null, null);
-                        Log.d(TAG, "Message sent to :" + data.getString(0) ); //data.getString(0) // this is the number
-                    }
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            long[] pattern = {0, 3000, 10};
+                            int[] amplitude = {255, 255, 255};
+
+                            if (Build.VERSION.SDK_INT >= 26) {
+                                vibrator.vibrate(VibrationEffect.createWaveform(pattern, amplitude, 0));
+                            } else {
+                                vibrator.vibrate(150);
+                            }
+
+                            AlertDialog.Builder builder;
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                builder = new AlertDialog.Builder(m_activity, android.app.AlertDialog.THEME_TRADITIONAL);
+                            } else {
+                                builder = new AlertDialog.Builder(m_activity);
+                            }
+                            builder.setTitle("Accident Detected")
+                                    .setMessage("Send emergency message? (Will automatically send in 30 seconds)")
+                                    .setPositiveButton("Yes", (dialog, which) -> {
+                                        sendEmergencyMessages();
+                                        vibrator.cancel();
+                                    })
+                                    .setNegativeButton(android.R.string.no, (dialog, which) -> {vibrator.cancel();})
+                                    .setIcon(android.R.drawable.ic_dialog_alert);
+
+                            final AlertDialog alert = builder.create();
+                            alert.setCanceledOnTouchOutside(false);
+                            alert.setCancelable(false);
+                            alert.show();
+
+                            Handler handler = new Handler();
+                            handler.postDelayed(() -> {
+                                if (alert.isShowing()) {
+                                    alert.dismiss();
+                                    sendEmergencyMessages();
+                                    vibrator.cancel();
+                                }
+                            }, 30000);
+                        }
+                    });
+
                 }
             } catch (IOException e) {
                 Log.d(TAG, "Input stream was disconnected", e);
                 break;
             }
 
+        }
+    }
+
+    private void sendEmergencyMessages() {
+        StringBuilder sb = new StringBuilder();
+        GeoCoordinate coordinate = mapFragmentView.getCoordinate();
+        sb.append("EMERGENCY: I HAVE BEEN INVOLVED IN A MOTORCYCLE ACCIDENT. LATITUDE: ");
+        sb.append(coordinate.getLatitude());
+        sb.append(" LONGITUDE: ");
+        sb.append(coordinate.getLongitude());
+        sb.append(" THIS IS AN AUTOMATED MESSAGE");
+
+        Cursor data = mDatabaseHelper.getPhoneNumber();
+
+        while(data.moveToNext()){
+            smsManager.sendTextMessage(data.getString(0), null, sb.toString(), null, null);
+            Log.d(TAG, "Message sent to :" + data.getString(0) ); //data.getString(0) // this is the number
         }
     }
 
@@ -219,7 +266,7 @@ public class ConnectedThread extends MainActivity implements Runnable {
         JSONObject json = new JSONObject();
 
         try {
-            json.put("optionMessage", new JSONObject().put(str, on));
+            json.put(str, on);
         } catch (JSONException e) {
             e.printStackTrace();
         }

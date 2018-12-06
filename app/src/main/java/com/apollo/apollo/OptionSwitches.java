@@ -3,29 +3,20 @@ package com.apollo.apollo;
 import android.widget.Switch;
 
 public class OptionSwitches {
-    private Switch rearviewSwitch, navigationSwitch, blindspotSwitch, crashSwitch;
+    private Switch hudSwitch, blindspotSwitch, crashSwitch;
 
-    public OptionSwitches(Switch rearviewSwitch, Switch navigationSwitch, Switch blindspotSwitch, Switch crashSwitch) {
-        this.rearviewSwitch = rearviewSwitch;
-        this.navigationSwitch = navigationSwitch;
+    public OptionSwitches(Switch hudSwitch, Switch blindspotSwitch, Switch crashSwitch) {
+        this.hudSwitch = hudSwitch;
         this.blindspotSwitch = blindspotSwitch;
         this.crashSwitch = crashSwitch;
     }
 
-    public Switch getRearviewSwitch() {
-        return rearviewSwitch;
+    public Switch getHudSwitch() {
+        return hudSwitch;
     }
 
-    public void setRearviewSwitch(Switch rearviewSwitch) {
-        this.rearviewSwitch = rearviewSwitch;
-    }
-
-    public Switch getNavigationSwitch() {
-        return navigationSwitch;
-    }
-
-    public void setNavigationSwitch(Switch navigationSwitch) {
-        this.navigationSwitch = navigationSwitch;
+    public void setHudSwitch(Switch hudSwitch) {
+        this.hudSwitch = hudSwitch;
     }
 
     public Switch getBlindspotSwitch() {
