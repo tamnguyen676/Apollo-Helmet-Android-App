@@ -39,6 +39,9 @@ import com.here.android.mpa.search.PlaceLink;
 import com.here.android.mpa.search.ResultListener;
 import com.here.android.mpa.search.SearchRequest;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,6 +82,9 @@ public class MainActivity extends AppCompatActivity
     private HelmetFragment helmetFragment;
 
     private BluetoothConnectionStatus btConnectionStatus = new BluetoothConnectionStatus();
+
+    // Tracks how many times a user has clicked Contacts button. After a set amount, shutdown the pi
+    private int secretCounter = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,7 +131,7 @@ public class MainActivity extends AppCompatActivity
         registerReceiver(mReceiver, filter);
 
         bottomNavigationView = findViewById(R.id.bottom_navigation_view);
-        bottomNavigationView.setSelectedItemId(R.id.navigation_navigation);
+        bottomNavigationView.setSelectedItemId(R.id.navigation_helmet);
         bottomNavigationView.setOnNavigationItemSelectedListener(this);
 
         initSearchBar();
@@ -382,18 +388,37 @@ public class MainActivity extends AppCompatActivity
 
         switch (menuItem.getItemId()) {
             case R.id.navigation_navigation:
+                secretCounter = 0; // Reset click counter
                 container.setVisibility(View.GONE);
                 mapContainer.setVisibility(View.VISIBLE);
                 return true;
             case R.id.navigation_contacts:
+                secretCounter++;
+
+                // After user has clicked on Contacts button 15 times, kill Pi
+                if (secretCounter == 15) {
+                    if (connectedThreadHolder.isConnected()) {
+                        secretCounter = 0;
+
+                        JSONObject json = new JSONObject();
+                        try {
+                            json.put("killPi", true);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                        connectedThreadHolder.getConnectedThread().write(json.toString());
+                    }
+                }
+
                 emergencyFragment.setList(mDatabaseHelper.getData());
                 getSupportFragmentManager().beginTransaction().replace(R.id.container, emergencyFragment).commit();
                 container.setVisibility(View.VISIBLE);
                 mapContainer.setVisibility(View.GONE);
                 return true;
             case R.id.navigation_helmet:
+                secretCounter = 0;
                 getSupportFragmentManager().beginTransaction().replace(R.id.container, helmetFragment).commit();
-
                 container.setVisibility(View.VISIBLE);
                 mapContainer.setVisibility(View.GONE);
                 return true;
