@@ -96,6 +96,7 @@ public class MainActivity extends AppCompatActivity
         floatingSearchView = findViewById(R.id.floatingSearchView);
         helmetSearchAlert = findViewById(R.id.helmetSearch);
 
+
         mDatabaseHelper = new DatabaseHelper(this);
 
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
@@ -131,8 +132,8 @@ public class MainActivity extends AppCompatActivity
         registerReceiver(mReceiver, filter);
 
         bottomNavigationView = findViewById(R.id.bottom_navigation_view);
-        bottomNavigationView.setSelectedItemId(R.id.navigation_helmet);
         bottomNavigationView.setOnNavigationItemSelectedListener(this);
+        bottomNavigationView.setSelectedItemId(R.id.navigation_helmet);
 
         initSearchBar();
 

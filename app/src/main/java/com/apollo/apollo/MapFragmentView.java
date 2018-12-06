@@ -308,7 +308,7 @@ public class MapFragmentView implements DistanceCalculator {
         });
         alertDialogBuilder.setPositiveButton("Simulation",new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialoginterface, int i) {
-                m_navigationManager.simulate(m_route,60);//Simualtion speed is set to 60 m/s
+                m_navigationManager.simulate(m_route,30);//Simualtion speed is set to 60 m/s
                 m_map.setTilt(60);
                 Log.d("MapFragment", "Simulating");
                 startForegroundService();

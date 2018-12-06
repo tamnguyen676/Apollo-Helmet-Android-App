@@ -2,18 +2,20 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/navigation_helmet"
-        android:icon="@drawable/ic_helmet"
-        android:title="@string/helmet"/>
-
-    <item
         android:id="@+id/navigation_navigation"
         android:icon="@drawable/ic_navigation_black_24dp"
         android:title="@string/navigation"/>
 
     <item
+        android:id="@+id/navigation_helmet"
+        android:icon="@drawable/ic_helmet"
+        android:title="@string/helmet"/>
+
+    <item
         android:id="@+id/navigation_contacts"
         android:icon="@drawable/ic_group_black_24dp"
         android:title="@string/contacts"/>
+
+
 
 </menu>
