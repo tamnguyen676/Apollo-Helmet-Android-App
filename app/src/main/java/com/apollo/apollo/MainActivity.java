@@ -32,12 +32,12 @@ import com.arlib.floatingsearchview.FloatingSearchView;
 import com.arlib.floatingsearchview.suggestions.SearchSuggestionsAdapter;
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.here.android.mpa.search.AutoSuggest;
+import com.here.android.mpa.search.AutoSuggestPlace;
 import com.here.android.mpa.search.DiscoveryResult;
-import com.here.android.mpa.search.DiscoveryResultPage;
 import com.here.android.mpa.search.ErrorCode;
-import com.here.android.mpa.search.PlaceLink;
 import com.here.android.mpa.search.ResultListener;
-import com.here.android.mpa.search.SearchRequest;
+import com.here.android.mpa.search.TextAutoSuggestionRequest;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity
     private Vibrator vibrator;
 
     private List<DiscoveryResult> discoveryResultList;
-    private ResultListener<DiscoveryResultPage> discoveryResultPageListener;
+    private ResultListener<List<AutoSuggest>> autoSuggest;
 
     private boolean loadingSuggestions = false;
 
@@ -440,21 +440,23 @@ public class MainActivity extends AppCompatActivity
     private void initSearchBar() {
 
         // Implement callback method for when results are found
-        discoveryResultPageListener = new ResultListener<DiscoveryResultPage>() {
+        autoSuggest = new ResultListener<List<AutoSuggest>>() {
             @Override
-            public void onCompleted(DiscoveryResultPage discoveryResultPage, ErrorCode errorCode) {
+            public void onCompleted(List<AutoSuggest> data, ErrorCode errorCode) {
                 if (errorCode == ErrorCode.NONE) {
-                    discoveryResultList = discoveryResultPage.getItems();
+//                    discoveryResultList = discoveryResultPage.getItems();
 
                     List<DestinationSuggestion> suggestList = new ArrayList<>();
 
                     // For each DiscoveryResult, make a corresponding DestinationSuggestion object
-                    for (DiscoveryResult result: discoveryResultList) {
-                        if (result.getResultType() == DiscoveryResult.ResultType.PLACE) {
+                    for (AutoSuggest result: data) {
+                        if (result.getType() == AutoSuggest.Type.PLACE) {
+                            AutoSuggestPlace resultPlace = (AutoSuggestPlace) result;
+
                             suggestList.add(new DestinationSuggestion(
-                                    result.getTitle(),
-                                    result.getVicinity().replace("<br/>", " "),
-                                    ((PlaceLink) result).getPosition()
+                                    resultPlace.getTitle(),
+                                    resultPlace.getVicinity().replace("<br/>", " "),
+                                    resultPlace.getPosition()
                             ));
                         }
                     }
@@ -509,11 +511,14 @@ public class MainActivity extends AppCompatActivity
                     floatingSearchView.showProgress(); // Show loading animation
                 }
 
+                try {
+                    TextAutoSuggestionRequest request =
+                            new TextAutoSuggestionRequest(newQuery)
+                                    .setSearchCenter(m_mapFragmentView.getMap().getCenter());
 
-                SearchRequest searchRequest = new SearchRequest(newQuery);
-                searchRequest.setCollectionSize(10); // Max of 10 results per page
-                searchRequest.setSearchCenter(m_mapFragmentView.getMap().getCenter());
-                searchRequest.execute(discoveryResultPageListener);
+                    request.execute(autoSuggest);
+                } catch (IllegalArgumentException e) {}
+                // Ignore exceptions, happens when query is empty or malformed
 
             }
         });
