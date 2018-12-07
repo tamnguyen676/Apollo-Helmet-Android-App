@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -31,6 +32,7 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
     private boolean hasInflated = false;
     private BluetoothConnectionStatus btConnectionStatus;
     private ConnectedThreadHolder connectedThreadHolder;
+    private SeekBar hudBrightness;
 
     public HelmetFragment() {
         // Required empty public constructor
@@ -48,37 +50,29 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
         hudSwitch = view.findViewById(R.id.hudSwitch);
         blindspotSwitch = view.findViewById(R.id.blindspotSwitch);
         crashSwitch = view.findViewById(R.id.crashSwitch);
+        hudBrightness = view.findViewById(R.id.hudBrightness);
 
         hudSwitch.setChecked(true);
         blindspotSwitch.setChecked(true);
         crashSwitch.setChecked(true);
+        hudBrightness.setMax(100);
+        hudBrightness.setProgress(100);
 
         hudSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (connectedThreadHolder.isConnected()) {
-                connectedThreadHolder
-                        .getConnectedThread()
-                        .write(getOptionMessage("hud", isChecked));
-                Log.d(TAG, getOptionMessage("hud", isChecked));
-            }
-            else {
-                Log.d(TAG, "Bluetooth not connected");
+            sendOptionMessage("hud", isChecked);
+
+            if (!isChecked) {
+                hudBrightness.setEnabled(false);
+            } else {
+                hudBrightness.setEnabled(true);
             }
         });
 
         blindspotSwitch.setOnCheckedChangeListener(((buttonView, isChecked) -> {
-            if (connectedThreadHolder.isConnected()) {
-                connectedThreadHolder
-                        .getConnectedThread()
-                        .write(getOptionMessage("blindspotSensor", isChecked));
-                Log.d(TAG, getOptionMessage("blindspotSensor", isChecked));
-            }
-            else {
-                Log.d(TAG, "Bluetooth not connected");
-            }
+            sendOptionMessage("blindspotSensor", isChecked);
         }));
 
         crashSwitch.setOnCheckedChangeListener(((buttonView, isChecked) -> {
-
             if (!isChecked) {
                 AlertDialog.Builder builder;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -94,15 +88,7 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
                             crashSwitch.setChecked(true);
                         })
                         .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                            if (connectedThreadHolder.isConnected()) {
-                                connectedThreadHolder
-                                        .getConnectedThread()
-                                        .write(getOptionMessage("crashSensor", isChecked));
-                                Log.d(TAG, getOptionMessage("crashSensor", isChecked));
-                            }
-                            else {
-                                Log.d(TAG, "Bluetooth not connected");
-                            }
+                            sendOptionMessage("crashSensor", isChecked);
                         })
                         .setIcon(android.R.drawable.ic_dialog_alert);
 
@@ -112,6 +98,37 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
                 alert.show();
             }
         }));
+
+        hudBrightness.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            int brightness = 0;
+            int progressChangeCount = 0; // Counts onProgressChange events
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                brightness = progress;
+                progressChangeCount++;
+
+                if (progressChangeCount == 10) {
+                    sendBrightnessMessage(scaleBrightness(brightness));
+                    progressChangeCount = 0;
+                }
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                sendBrightnessMessage(scaleBrightness(brightness));
+
+                progressChangeCount = 0;
+            }
+        });
+
+
 
         handleStatus();
 
@@ -129,6 +146,7 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
         blindspotSwitch.setEnabled(false);
         hudSwitch.setEnabled(false);
         crashSwitch.setEnabled(false);
+        hudBrightness.setEnabled(false);
 
         connectionStatus.setText(R.string.helmet_disconnected);
         connectionButton.setText(R.string.connect);
@@ -140,6 +158,7 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
         blindspotSwitch.setEnabled(false);
         hudSwitch.setEnabled(false);
         crashSwitch.setEnabled(false);
+        hudBrightness.setEnabled(false);
 
         connectionStatus.setText(R.string.searching_for_helmet);
         connectionButton.setText(R.string.connect);
@@ -151,6 +170,12 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
         blindspotSwitch.setEnabled(true);
         hudSwitch.setEnabled(true);
         crashSwitch.setEnabled(true);
+
+        if (!blindspotSwitch.isChecked()) {
+            hudBrightness.setEnabled(false);
+        } else {
+            hudBrightness.setEnabled(true);
+        }
 
         if (connectedThreadHolder.getConnectedThread() != null) {
             ConnectedThread connectedThread = connectedThreadHolder.getConnectedThread();
@@ -198,6 +223,60 @@ public class HelmetFragment extends androidx.fragment.app.Fragment {
         }
 
         return json.toString();
+    }
+
+    private int scaleBrightness(int brightness) {
+        if (brightness < 33) {
+            return (int) Math.round(Math.pow(brightness, .6));
+        }
+        else if (brightness < 66) {
+            return Math.round(brightness - 25);
+        }
+        else {
+            return (int) Math.round(1.73 * brightness - 73);
+        }
+    }
+
+    private String getBrightnessMessage(String str, int brightness) {
+        JSONObject json = new JSONObject();
+
+        try {
+            json.put(str, scaleBrightness(brightness));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return json.toString();
+    }
+
+    private boolean sendOptionMessage(String option, boolean isChecked) {
+        if (connectedThreadHolder.isConnected()) {
+            connectedThreadHolder
+                    .getConnectedThread()
+                    .write(getOptionMessage(option, isChecked));
+            Log.d(TAG, getOptionMessage(option, isChecked));
+            return true;
+        }
+        else {
+            Log.d(TAG, "Bluetooth not connected");
+        }
+
+        return false;
+    }
+
+    private boolean sendBrightnessMessage(int brightness) {
+        if (connectedThreadHolder.isConnected()) {
+            connectedThreadHolder
+                    .getConnectedThread()
+                    .write(getBrightnessMessage("hudBrightness", brightness));
+            Log.d(TAG, getBrightnessMessage("hudBrightness", brightness));
+            return true;
+        }
+        else {
+            Log.d(TAG, "Bluetooth not connected");
+        }
+
+        return false;
     }
 
     public boolean hasInflated() {

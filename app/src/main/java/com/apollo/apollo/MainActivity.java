@@ -182,8 +182,8 @@ public class MainActivity extends AppCompatActivity
                 // String deviceHardwareAddress = device.getAddress(); // MAC address
             }
             else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
+                toastMessage("Could not find Apollo Helmet");
                 if (connectedThreadHolder.getConnectedThread() == null) {
-                    toastMessage("Could not find Apollo Helmet");
                     helmetSearchAlert.setVisibility(View.GONE);
 
                     if (helmetFragment != null && helmetFragment.hasInflated()) {
@@ -409,6 +409,7 @@ public class MainActivity extends AppCompatActivity
                         }
 
                         connectedThreadHolder.getConnectedThread().write(json.toString());
+                        toastMessage("Shutdown Helmet");
                     }
                 }
 
